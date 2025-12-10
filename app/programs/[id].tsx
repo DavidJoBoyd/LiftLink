@@ -1,59 +1,73 @@
-// app/my-programs.tsx
-import { Stack, useRouter } from 'expo-router';
+// app/programs/[id].tsx
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { getPrograms, type ProgramRow } from '@/utils/database';
+import {
+    getProgramById,
+    getWorkoutsForProgram,
+    type WorkoutRow,
+} from '@/utils/database';
 
-export default function MyProgramsScreen() {
-  const [programs, setPrograms] = useState<ProgramRow[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function ProgramDetailScreen() {
+  const { id } = useLocalSearchParams();
+  const programId = Number(id);
   const router = useRouter();
 
+  const [workouts, setWorkouts] = useState<WorkoutRow[]>([]);
+  const [programName, setProgramName] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
+    if (!programId) return;
+
     const load = async () => {
       try {
-        const rows = await getPrograms();
-        setPrograms(rows);
+        const [program, workoutRows] = await Promise.all([
+          getProgramById(programId),
+          getWorkoutsForProgram(programId),
+        ]);
+
+        if (program) setProgramName(program.name);
+        setWorkouts(workoutRows);
       } catch (err) {
-        console.error('Failed to load programs:', err);
+        console.error('Failed to load program/workouts:', err);
       } finally {
         setLoading(false);
       }
     };
 
     load();
-  }, []);
+  }, [programId]);
 
-  const hasPrograms = programs.length > 0;
+  const hasWorkouts = workouts.length > 0;
 
   return (
     <>
-      <Stack.Screen options={{ title: 'My Programs' }} />
+      <Stack.Screen options={{ title: programName || 'Program' }} />
 
       <ThemedView style={styles.container}>
         <ThemedText type="title" style={styles.title}>
-          My Programs
+          {programName || 'Program'}
         </ThemedText>
 
         {loading ? (
           <ThemedText>Loading...</ThemedText>
-        ) : !hasPrograms ? (
+        ) : !hasWorkouts ? (
           <ThemedText style={styles.emptyText}>
-            You don’t have any programs yet.{'\n'}
-            Create your first one from the home screen.
+            This program doesn’t have any workouts yet.
           </ThemedText>
         ) : (
           <FlatList
-            data={programs}
+            data={workouts}
             keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={styles.listContent}
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={styles.card}
-                onPress={() => router.push(`/programs/${item.id}`)} // 👈 go to detail screen
+                onPress={() => router.push(`/workouts/${item.id}`)} // 👈 go to sets screen
               >
                 <ThemedText type="defaultSemiBold">{item.name}</ThemedText>
               </TouchableOpacity>

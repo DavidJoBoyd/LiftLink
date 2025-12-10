@@ -138,3 +138,23 @@ export async function getSetsForWorkout(
     workoutId
   );
 }
+
+export async function getProgramById(id: number): Promise<ProgramRow | null> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<ProgramRow>(
+    'SELECT id, name FROM programs WHERE id = ?',
+    [id]
+  );
+
+  return row ?? null;
+}
+
+export async function getWorkoutById(id: number): Promise<WorkoutRow | null> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<WorkoutRow>(
+    'SELECT id, programId, name FROM workouts WHERE id = ?',
+    [id]
+  );
+
+  return row ?? null;
+}
