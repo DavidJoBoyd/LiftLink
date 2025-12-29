@@ -1,13 +1,31 @@
+import { useEffect, useState } from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { getPersonalRecords, type PersonalRecord } from '@/utils/database';
 import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
   
   const router = useRouter();
+  const [prs, setPrs] = useState<PersonalRecord[]>([]);
+  const [loadingPrs, setLoadingPrs] = useState(true);
+
+  useEffect(() => {
+    const loadPrs = async () => {
+      try {
+        const records = await getPersonalRecords();
+        setPrs(records);
+      } catch (err) {
+        console.error('Failed to load PRs:', err);
+      } finally {
+        setLoadingPrs(false);
+      }
+    };
+    loadPrs();
+  }, []);
 
   const handleCreateProgram = () => router.push('/create-program');
   const handleStartWorkout = () => router.push('/start-workout');
@@ -64,6 +82,37 @@ export default function HomeScreen() {
             <ThemedText style={styles.secondaryButtonText}>Current Program</ThemedText>
           </TouchableOpacity>
         </ThemedView>
+
+        <ThemedView style={styles.prsSection}>
+          <ThemedText type="subtitle" style={styles.prsTitle}>
+            Personal Records
+          </ThemedText>
+          {loadingPrs ? (
+            <ThemedText style={styles.emptyText}>Loading PRs...</ThemedText>
+          ) : prs.length === 0 ? (
+            <ThemedText style={styles.emptyText}>
+              No personal records yet. Start logging workouts to see your PRs here!
+            </ThemedText>
+          ) : (
+            <ThemedView style={styles.prsList}>
+              {prs.map((pr, index) => (
+                <ThemedView key={index} style={styles.prCard}>
+                  <ThemedView style={styles.prCardHeader}>
+                    <ThemedText type="defaultSemiBold" style={styles.prExerciseName}>
+                      {pr.exerciseName}
+                    </ThemedText>
+                    <ThemedText type="defaultSemiBold" style={styles.prWeight}>
+                      {pr.maxWeight} lb
+                    </ThemedText>
+                  </ThemedView>
+                  <ThemedText style={styles.prDetails}>
+                    {pr.reps} reps
+                  </ThemedText>
+                </ThemedView>
+              ))}
+            </ThemedView>
+          )}
+        </ThemedView>
       </ThemedView>
     </ParallaxScrollView>
   );
@@ -105,5 +154,43 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     fontWeight: '600',
+  },
+  prsSection: {
+    marginTop: 32,
+    gap: 16,
+  },
+  prsTitle: {
+    marginBottom: 8,
+  },
+  prsList: {
+    gap: 10,
+  },
+  prCard: {
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#4b5563',
+  },
+  prCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  prExerciseName: {
+    flex: 1,
+  },
+  prWeight: {
+    fontSize: 18,
+    color: '#22c55e',
+  },
+  prDetails: {
+    opacity: 0.7,
+    fontSize: 14,
+  },
+  emptyText: {
+    opacity: 0.6,
+    textAlign: 'center',
+    paddingVertical: 8,
   },
 });

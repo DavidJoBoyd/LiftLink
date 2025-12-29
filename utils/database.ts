@@ -5,6 +5,7 @@ import * as SQLite from 'expo-sqlite';
 export type ProgramRow = {
   id: number;
   name: string;
+  isCurrentProgram: number; // 0 or 1
 };
 
 export type WorkoutRow = {
@@ -58,6 +59,7 @@ export async function getDb() {
         );
       `);
 
+
       return db;
     })();
   }
@@ -70,7 +72,7 @@ export async function getDb() {
 export async function createProgram(name: string) {
   const db = await getDb();
   await db.runAsync(
-    'INSERT INTO programs (name) VALUES (?)',
+    'INSERT INTO programs (name, isCurrentProgram) VALUES (?, 0)',
     name.trim()
   );
 }
@@ -78,7 +80,7 @@ export async function createProgram(name: string) {
 export async function getPrograms(): Promise<ProgramRow[]> {
   const db = await getDb();
   return db.getAllAsync<ProgramRow>(
-    'SELECT id, name FROM programs ORDER BY id DESC'
+    'SELECT id, name, isCurrentProgram FROM programs ORDER BY id DESC'
   );
 }
 
@@ -142,11 +144,16 @@ export async function getSetsForWorkout(
 export async function getProgramById(id: number): Promise<ProgramRow | null> {
   const db = await getDb();
   const row = await db.getFirstAsync<ProgramRow>(
-    'SELECT id, name FROM programs WHERE id = ?',
+    'SELECT id, name, isCurrentProgram FROM programs WHERE id = ?',
     [id]
   );
-
   return row ?? null;
+}
+/** Set the current program by id, and unset all others */
+export async function setCurrentProgram(id: number) {
+  const db = await getDb();
+  await db.runAsync('UPDATE programs SET isCurrentProgram = 0');
+  await db.runAsync('UPDATE programs SET isCurrentProgram = 1 WHERE id = ?', id);
 }
 
 export async function getWorkoutById(id: number): Promise<WorkoutRow | null> {
@@ -157,4 +164,34 @@ export async function getWorkoutById(id: number): Promise<WorkoutRow | null> {
   );
 
   return row ?? null;
+}
+
+/* ---------- PERSONAL RECORDS ---------- */
+
+export type PersonalRecord = {
+  exerciseName: string;
+  maxWeight: number;
+  reps: number;
+  date: string;
+};
+
+export async function getPersonalRecords(): Promise<PersonalRecord[]> {
+  const db = await getDb();
+  return db.getAllAsync<PersonalRecord>(
+    `SELECT 
+      s1.exerciseName,
+      s1.weight as maxWeight,
+      s1.reps,
+      s1.date
+    FROM sets s1
+    INNER JOIN (
+      SELECT exerciseName, MAX(weight) as maxWeight
+      FROM sets
+      WHERE isTemplate = 0
+      GROUP BY exerciseName
+    ) s2 ON s1.exerciseName = s2.exerciseName AND s1.weight = s2.maxWeight
+    WHERE s1.isTemplate = 0
+    GROUP BY s1.exerciseName
+    ORDER BY maxWeight DESC, s1.exerciseName`
+  );
 }

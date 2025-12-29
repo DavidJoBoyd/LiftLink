@@ -53,9 +53,14 @@ export default function MyProgramsScreen() {
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={styles.card}
-                onPress={() => router.push(`/programs/${item.id}`)} // 👈 go to detail screen
+                onPress={() => router.push(`/programs/${item.id}`)}
               >
-                <ThemedText type="defaultSemiBold">{item.name}</ThemedText>
+                <ThemedText type="defaultSemiBold">
+                  {item.name}
+                  {item.isCurrentProgram === 1 && (
+                    <ThemedText style={styles.currentIndicator}>  (Current)</ThemedText>
+                  )}
+                </ThemedText>
               </TouchableOpacity>
             )}
           />
@@ -75,5 +80,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#4b5563',
+  },
+  currentIndicator: {
+    color: '#22c55e',
+    fontWeight: 'bold',
   },
 });
