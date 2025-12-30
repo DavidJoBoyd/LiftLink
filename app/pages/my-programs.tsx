@@ -5,7 +5,7 @@ import { FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { getPrograms, type ProgramRow } from '@/utils/database';
+import { getPrograms, setCurrentProgram, type ProgramRow } from '@/utils/database';
 
 export default function MyProgramsScreen() {
   const [programs, setPrograms] = useState<ProgramRow[]>([]);
@@ -28,6 +28,15 @@ export default function MyProgramsScreen() {
   }, []);
 
   const hasPrograms = programs.length > 0;
+  const [settingCurrent, setSettingCurrent] = useState<number|null>(null);
+
+  const handleSetCurrentProgram = async (id: number) => {
+    setSettingCurrent(id);
+    await setCurrentProgram(id);
+    const rows = await getPrograms();
+    setPrograms(rows);
+    setSettingCurrent(null);
+  };
 
   return (
     <>
@@ -61,6 +70,17 @@ export default function MyProgramsScreen() {
                     <ThemedText style={styles.currentIndicator}>  (Current)</ThemedText>
                   )}
                 </ThemedText>
+                  {item.isCurrentProgram !== 1 && (
+                    <TouchableOpacity
+                      style={styles.setCurrentButton}
+                      onPress={() => handleSetCurrentProgram(item.id)}
+                      disabled={settingCurrent === item.id}
+                    >
+                      <ThemedText style={styles.setCurrentButtonText}>
+                        {settingCurrent === item.id ? 'Setting...' : 'Set as Current'}
+                      </ThemedText>
+                    </TouchableOpacity>
+                  )}
               </TouchableOpacity>
             )}
           />
@@ -85,4 +105,16 @@ const styles = StyleSheet.create({
     color: '#22c55e',
     fontWeight: 'bold',
   },
+    setCurrentButton: {
+      marginTop: 8,
+      paddingVertical: 8,
+      paddingHorizontal: 14,
+      borderRadius: 999,
+      backgroundColor: '#22c55e',
+      alignItems: 'center',
+    },
+    setCurrentButtonText: {
+      fontWeight: '600',
+      color: '#022c22',
+    },
 });

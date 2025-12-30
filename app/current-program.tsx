@@ -115,3 +115,4 @@ const styles = StyleSheet.create({
     color: '#022c22',
   },
 });
+  // This file has been removed as requested.
