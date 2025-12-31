@@ -9,14 +9,10 @@ import { useRouter } from 'expo-router';
 export default function HomeScreen() {
   
   const router = useRouter();
-
-  // ...existing code...
-
   const handleCreateProgram = () => router.push('/pages/create-program');
   const handleStartWorkout = () => router.push('/pages/start-workout');
   const handleWorkoutLog = () => router.push('/pages/workout-log');
   const handleMyPrograms = () => router.push('/pages/my-programs');
-  const handleCurrentProgram = () => router.push('/current-program');
   
   return (
   <ParallaxScrollView
@@ -60,7 +56,7 @@ export default function HomeScreen() {
           <ThemedText style={styles.primaryButtonText}>Create a Program</ThemedText>
         </TouchableOpacity>
 
-        // ...existing code...
+        {/* ...existing code... */}
       </ThemedView>
     </ThemedView>
   </ParallaxScrollView>
