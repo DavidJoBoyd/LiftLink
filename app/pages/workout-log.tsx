@@ -1,5 +1,5 @@
-import { Stack } from 'expo-router';
-import { FlatList, StyleSheet } from 'react-native';
+import { Stack, useRouter } from 'expo-router';
+import { FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import { useEffect, useState } from 'react';
 
 import { getWorkoutLog, type WorkoutLogEntry } from '@/utils/database';
@@ -10,6 +10,7 @@ import { ThemedView } from '@/components/themed-view';
 export default function WorkoutLogScreen() {
   const [workouts, setWorkouts] = useState<WorkoutLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchLog = async () => {
@@ -23,6 +24,10 @@ export default function WorkoutLogScreen() {
     };
     fetchLog();
   }, []);
+
+  const handlePressLog = (workoutId: number, date: string) => {
+    router.push(`/workout-session?workoutId=${workoutId}&date=${encodeURIComponent(date)}`);
+  };
 
   const hasWorkouts = workouts.length > 0;
 
@@ -49,11 +54,13 @@ export default function WorkoutLogScreen() {
             keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={styles.listContent}
             renderItem={({ item }) => (
-              <ThemedView style={styles.card}>
-                <ThemedText type="defaultSemiBold">{item.workoutName}</ThemedText>
-                <ThemedText>{item.date}</ThemedText>
-                <ThemedText>{item.setCount} sets</ThemedText>
-              </ThemedView>
+              <TouchableOpacity onPress={() => handlePressLog(item.workoutId, item.date)}>
+                <ThemedView style={styles.card}>
+                  <ThemedText type="defaultSemiBold">{item.workoutName}</ThemedText>
+                  <ThemedText>{item.date}</ThemedText>
+                  <ThemedText>{item.setCount} sets</ThemedText>
+                </ThemedView>
+              </TouchableOpacity>
             )}
           />
         )}
