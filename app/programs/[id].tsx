@@ -6,32 +6,33 @@ import { FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import {
-    getProgramById,
-    getWorkoutsForProgram,
-    type WorkoutRow,
+    getProgramTemplates,
+    getWorkoutTemplatesForProgram,
+    type WorkoutTemplateRow,
 } from '@/utils/database';
 
 export default function ProgramDetailScreen() {
   const { id } = useLocalSearchParams();
-  const programId = Number(id);
+  const programTemplateId = Number(id);
   const router = useRouter();
 
-  const [workouts, setWorkouts] = useState<WorkoutRow[]>([]);
+  const [workouts, setWorkouts] = useState<WorkoutTemplateRow[]>([]);
   const [programName, setProgramName] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!programId) return;
+    if (!programTemplateId) return;
 
     const load = async () => {
       try {
-        const [program, workoutRows] = await Promise.all([
-          getProgramById(programId),
-          getWorkoutsForProgram(programId),
+        const [programTemplates, workoutTemplates] = await Promise.all([
+          getProgramTemplates(),
+          getWorkoutTemplatesForProgram(programTemplateId),
         ]);
 
+        const program = programTemplates.find((p) => p.id === programTemplateId);
         if (program) setProgramName(program.name);
-        setWorkouts(workoutRows);
+        setWorkouts(workoutTemplates);
       } catch (err) {
         console.error('Failed to load program/workouts:', err);
       } finally {
@@ -40,7 +41,7 @@ export default function ProgramDetailScreen() {
     };
 
     load();
-  }, [programId]);
+  }, [programTemplateId]);
 
   const hasWorkouts = workouts.length > 0;
 
@@ -65,12 +66,9 @@ export default function ProgramDetailScreen() {
             keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={styles.listContent}
             renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.card}
-                onPress={() => router.push(`/workouts/${item.id}`)} // 👈 go to sets screen
-              >
+              <ThemedView style={styles.card}>
                 <ThemedText type="defaultSemiBold">{item.name}</ThemedText>
-              </TouchableOpacity>
+              </ThemedView>
             )}
           />
         )}

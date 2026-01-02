@@ -11,7 +11,7 @@ import {
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { getDb } from '@/utils/database';
+import { getDb, createProgramTemplate, createWorkoutTemplate, createSetTemplate } from '@/utils/database';
 
 
 type NewSet = {
@@ -140,26 +140,18 @@ export default function CreateProgramScreen() {
 
     try {
       setSaving(true);
+      // Insert into program_templates
+      await createProgramTemplate(trimmedProgram);
+      // Get the last inserted program_template id
       const db = await getDb();
+      const [{ id: programTemplateId }] = await db.getAllAsync('SELECT id FROM program_templates ORDER BY id DESC LIMIT 1');
 
-      // Start: insert program
-      const programResult = await db.runAsync(
-        'INSERT INTO programs (name) VALUES (?)',
-        trimmedProgram
-      );
-      const programId = programResult.lastInsertRowId as number;
-
-      // For each workout, insert and then insert its exercises/sets
       for (const workout of workouts) {
         const trimmedWorkoutName = workout.name.trim();
         if (!trimmedWorkoutName) continue;
 
-        const workoutResult = await db.runAsync(
-          'INSERT INTO workouts (programId, name) VALUES (?, ?)',
-          programId,
-          trimmedWorkoutName
-        );
-        const workoutId = workoutResult.lastInsertRowId as number;
+        await createWorkoutTemplate(programTemplateId, trimmedWorkoutName);
+        const [{ id: workoutTemplateId }] = await db.getAllAsync('SELECT id FROM workout_templates WHERE programTemplateId = ? ORDER BY id DESC LIMIT 1', programTemplateId);
 
         for (const exercise of workout.exercises) {
           const trimmedExercise = exercise.name.trim();
@@ -170,16 +162,7 @@ export default function CreateProgramScreen() {
             const repsNum = parseInt(set.reps || '0', 10);
             if (Number.isNaN(weightNum) || Number.isNaN(repsNum)) continue;
 
-            await db.runAsync(
-              `INSERT INTO sets (workoutId, exerciseName, weight, reps, date, isTemplate)
-               VALUES (?, ?, ?, ?, ?, ?)`,
-              workoutId,
-              trimmedExercise,
-              weightNum,
-              repsNum,
-              new Date().toISOString(),
-              1 // isTemplate = true while building the program
-            );
+            await createSetTemplate(workoutTemplateId, trimmedExercise, weightNum, repsNum);
           }
         }
       }
@@ -187,7 +170,7 @@ export default function CreateProgramScreen() {
       // After saving everything, go to My Programs
       router.push('/my-programs');
     } catch (err) {
-      console.error('Failed to save program with workouts/sets:', err);
+      console.error('Failed to save program template:', err);
     } finally {
       setSaving(false);
     }

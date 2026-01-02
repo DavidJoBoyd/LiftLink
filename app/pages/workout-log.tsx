@@ -1,16 +1,30 @@
 import { Stack } from 'expo-router';
 import { FlatList, StyleSheet } from 'react-native';
+import { useEffect, useState } from 'react';
+
+import { getWorkoutLog, type WorkoutLogEntry } from '@/utils/database';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
-const dummyWorkouts = [
-  // later you’ll replace this with real data
-  // { id: '1', date: '2025-01-01', title: 'Upper Body', sets: 20 },
-];
-
 export default function WorkoutLogScreen() {
-  const hasWorkouts = dummyWorkouts.length > 0;
+  const [workouts, setWorkouts] = useState<WorkoutLogEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLog = async () => {
+      setLoading(true);
+      try {
+        const log = await getWorkoutLog();
+        setWorkouts(log);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLog();
+  }, []);
+
+  const hasWorkouts = workouts.length > 0;
 
   return (
     <>
@@ -21,7 +35,9 @@ export default function WorkoutLogScreen() {
           Workout Log
         </ThemedText>
 
-        {!hasWorkouts ? (
+        {loading ? (
+          <ThemedText style={styles.emptyText}>Loading...</ThemedText>
+        ) : !hasWorkouts ? (
           <ThemedText style={styles.emptyText}>
             You haven’t logged any workouts yet.
             {'\n'}
@@ -29,14 +45,14 @@ export default function WorkoutLogScreen() {
           </ThemedText>
         ) : (
           <FlatList
-            data={dummyWorkouts}
-            keyExtractor={(item) => item.id}
+            data={workouts}
+            keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={styles.listContent}
             renderItem={({ item }) => (
               <ThemedView style={styles.card}>
-                <ThemedText type="defaultSemiBold">{item.title}</ThemedText>
+                <ThemedText type="defaultSemiBold">{item.workoutName}</ThemedText>
                 <ThemedText>{item.date}</ThemedText>
-                <ThemedText>{item.sets} sets</ThemedText>
+                <ThemedText>{item.setCount} sets</ThemedText>
               </ThemedView>
             )}
           />

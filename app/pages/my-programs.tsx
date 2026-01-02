@@ -5,62 +5,95 @@ import { Alert, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { deleteProgram, getPrograms, setCurrentProgram, type ProgramRow } from '@/utils/database';
+import {
+  getProgramTemplates,
+  ProgramTemplateRow,
+  getWorkoutTemplatesForProgram,
+  getSetTemplatesForWorkout,
+  createProgram,
+  createWorkout,
+  addSetToWorkout,
+  setCurrentProgram,
+  getPrograms,
+  getWorkoutsForProgram,
+} from '@/utils/database';
 
 export default function MyProgramsScreen() {
-  const [programs, setPrograms] = useState<ProgramRow[]>([]);
+  const [programs, setPrograms] = useState<ProgramTemplateRow[]>([]);
+  const [currentProgramName, setCurrentProgramName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [settingCurrent, setSettingCurrent] = useState<number | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     const load = async () => {
       try {
-        const rows = await getPrograms();
-        setPrograms(rows);
+        const [templates, realPrograms] = await Promise.all([
+          getProgramTemplates(),
+          getPrograms(),
+        ]);
+        setPrograms(templates);
+        const current = realPrograms.find(p => p.isCurrentProgram === 1);
+        setCurrentProgramName(current ? current.name : null);
       } catch (err) {
         console.error('Failed to load programs:', err);
       } finally {
         setLoading(false);
       }
     };
-
     load();
   }, []);
 
   const hasPrograms = programs.length > 0;
-  const [settingCurrent, setSettingCurrent] = useState<number|null>(null);
-  const [deletingId, setDeletingId] = useState<number|null>(null);
 
-  const handleDeleteProgram = async (id: number) => {
-    setDeletingId(id);
-    try {
-      await deleteProgram(id);
-      const rows = await getPrograms();
-      setPrograms(rows);
-    } catch (err) {
-      console.error('Failed to delete program:', err);
-    } finally {
-      setDeletingId(null);
+  const instantiateTemplateProgram = async (programTemplateId: number): Promise<number> => {
+    // Copy template to real tables and return new program id
+    const programTemplates = await getProgramTemplates();
+    const template = programTemplates.find((p) => p.id === programTemplateId);
+    if (!template) throw new Error('Template not found');
+    await createProgram(template.name);
+    const programs = await getPrograms();
+    const newProgram = programs.find((p) => p.name === template.name);
+    if (!newProgram) throw new Error('Failed to create program');
+    const workoutTemplates = await getWorkoutTemplatesForProgram(programTemplateId);
+    for (const workoutTemplate of workoutTemplates) {
+      await createWorkout(newProgram.id, workoutTemplate.name);
+      const workouts = await getWorkoutsForProgram(newProgram.id);
+      const newWorkout = workouts.find((w) => w.name === workoutTemplate.name);
+      if (!newWorkout) continue;
+      const setTemplates = await getSetTemplatesForWorkout(workoutTemplate.id);
+      for (const setTemplate of setTemplates) {
+        await addSetToWorkout(
+          newWorkout.id,
+          setTemplate.exerciseName,
+          setTemplate.weight,
+          setTemplate.reps,
+          new Date(),
+          true // isTemplate = true for initial sets
+        );
+      }
     }
+    return newProgram.id;
   };
 
-  const confirmDeleteProgram = (id: number, name: string) => {
-    Alert.alert(
-      'Delete Program',
-      `Are you sure you want to delete the program "${name}"? This cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => handleDeleteProgram(id) },
-      ]
-    );
-  };
-
-  const handleSetCurrentProgram = async (id: number) => {
-    setSettingCurrent(id);
-    await setCurrentProgram(id);
-    const rows = await getPrograms();
-    setPrograms(rows);
-    setSettingCurrent(null);
+  const handleSetCurrentProgram = async (templateId: number) => {
+    setSettingCurrent(templateId);
+    try {
+      const newProgramId = await instantiateTemplateProgram(templateId);
+      await setCurrentProgram(newProgramId);
+      // Refresh both templates and real programs to update UI
+      const [templates, realPrograms] = await Promise.all([
+        getProgramTemplates(),
+        getPrograms(),
+      ]);
+      setPrograms(templates);
+      const current = realPrograms.find(p => p.isCurrentProgram === 1);
+      setCurrentProgramName(current ? current.name : null);
+    } catch (err) {
+      console.error('Failed to set current program:', err);
+    } finally {
+      setSettingCurrent(null);
+    }
   };
 
   return (
@@ -84,40 +117,34 @@ export default function MyProgramsScreen() {
             data={programs}
             keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={styles.listContent}
-            renderItem={({ item }) => (
-              <ThemedView style={styles.card}>
-                <TouchableOpacity
-                  onPress={() => router.push(`/programs/${item.id}`)}
-                >
-                  <ThemedText type="defaultSemiBold">
-                    {item.name}
-                    {item.isCurrentProgram === 1 && (
-                      <ThemedText style={styles.currentIndicator}>  (Current)</ThemedText>
-                    )}
-                  </ThemedText>
-                </TouchableOpacity>
-                {item.isCurrentProgram !== 1 && (
+            renderItem={({ item }) => {
+              const isCurrent = item.name === currentProgramName;
+              return (
+                <ThemedView style={styles.card}>
                   <TouchableOpacity
-                    style={styles.setCurrentButton}
-                    onPress={() => handleSetCurrentProgram(item.id)}
-                    disabled={settingCurrent === item.id}
+                    onPress={() => router.push(`/programs/${item.id}`)}
                   >
-                    <ThemedText style={styles.setCurrentButtonText}>
-                      {settingCurrent === item.id ? 'Setting...' : 'Set as Current'}
+                    <ThemedText type="defaultSemiBold">
+                      {item.name}
+                      {isCurrent && (
+                        <ThemedText style={styles.currentIndicator}>  (Current)</ThemedText>
+                      )}
                     </ThemedText>
                   </TouchableOpacity>
-                )}
-                <TouchableOpacity
-                  style={styles.deleteButton}
-                  onPress={() => confirmDeleteProgram(item.id, item.name)}
-                  disabled={deletingId === item.id}
-                >
-                  <ThemedText style={styles.deleteButtonText}>
-                    {deletingId === item.id ? 'Deleting...' : 'Delete'}
-                  </ThemedText>
-                </TouchableOpacity>
-              </ThemedView>
-            )}
+                  {!isCurrent && (
+                    <TouchableOpacity
+                      style={styles.setCurrentButton}
+                      onPress={() => handleSetCurrentProgram(item.id)}
+                      disabled={settingCurrent === item.id}
+                    >
+                      <ThemedText style={styles.setCurrentButtonText}>
+                        {settingCurrent === item.id ? 'Setting...' : 'Set as Current'}
+                      </ThemedText>
+                    </TouchableOpacity>
+                  )}
+                </ThemedView>
+              );
+            }}
           />
         )}
       </ThemedView>
@@ -137,32 +164,20 @@ const styles = StyleSheet.create({
     borderColor: '#4b5563',
     marginBottom: 4,
   },
-  currentIndicator: {
-    color: '#22c55e',
-    fontWeight: 'bold',
-  },
   setCurrentButton: {
     marginTop: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    backgroundColor: '#22c55e',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: '#3b82f6',
     alignItems: 'center',
   },
   setCurrentButtonText: {
-    fontWeight: '600',
-    color: '#022c22',
-  },
-  deleteButton: {
-    marginTop: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    backgroundColor: '#ef4444',
-    alignItems: 'center',
-  },
-  deleteButtonText: {
-    fontWeight: '600',
     color: '#fff',
+    fontWeight: '500',
+  },
+  currentIndicator: {
+    fontSize: 14,
+    color: '#4caf50',
   },
 });

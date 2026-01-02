@@ -1,12 +1,42 @@
-import { Stack } from 'expo-router';
+import { getPrograms, getWorkoutsForProgram, ProgramRow, WorkoutRow } from '@/utils/database';
+import { Stack, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
 export default function StartWorkoutScreen() {
+  const [currentProgram, setCurrentProgram] = useState<ProgramRow | null>(null);
+  const [currentWorkout, setCurrentWorkout] = useState<WorkoutRow | null>(null);
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCurrent = async () => {
+      setLoading(true);
+      try {
+        const programs = await getPrograms();
+        const current = programs.find(p => p.isCurrentProgram === 1) || null;
+        setCurrentProgram(current);
+        if (current) {
+          const workouts = await getWorkoutsForProgram(current.id);
+          setCurrentWorkout(workouts.length > 0 ? workouts[0] : null);
+        } else {
+          setCurrentWorkout(null);
+        }
+      } catch (err) {
+        setCurrentProgram(null);
+        setCurrentWorkout(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCurrent();
+  }, []);
+
   const handleStartFromCurrent = () => {
-    console.log('Start workout from current program');
+    router.push('/pages/do-workout');
   };
 
   const handleQuickWorkout = () => {
@@ -22,14 +52,30 @@ export default function StartWorkoutScreen() {
           Start Workout
         </ThemedText>
 
-        <ThemedText style={styles.subtitle}>
-          Choose how you want to train today.
-        </ThemedText>
+        {loading ? (
+          <ThemedText style={styles.subtitle}>Loading current program...</ThemedText>
+        ) : currentProgram ? (
+          <>
+            <ThemedText style={styles.subtitle}>
+              Current Program: <ThemedText style={{ fontWeight: 'bold' }}>{currentProgram.name}</ThemedText>
+            </ThemedText>
+            {currentWorkout ? (
+              <ThemedText style={styles.subtitle}>
+                Current Workout: <ThemedText style={{ fontWeight: 'bold' }}>{currentWorkout.name}</ThemedText>
+              </ThemedText>
+            ) : (
+              <ThemedText style={styles.subtitle}>No workouts found for this program.</ThemedText>
+            )}
+          </>
+        ) : (
+          <ThemedText style={styles.subtitle}>No current program selected.</ThemedText>
+        )}
 
         <ThemedView style={styles.buttonGroup}>
           <TouchableOpacity
             style={[styles.button, styles.primaryButton]}
             onPress={handleStartFromCurrent}
+            disabled={!currentProgram || !currentWorkout}
           >
             <ThemedText style={styles.primaryButtonText}>
               Use Current Program
