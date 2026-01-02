@@ -1,11 +1,11 @@
 // app/my-programs.tsx
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { Alert, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { getPrograms, setCurrentProgram, type ProgramRow } from '@/utils/database';
+import { deleteProgram, getPrograms, setCurrentProgram, type ProgramRow } from '@/utils/database';
 
 export default function MyProgramsScreen() {
   const [programs, setPrograms] = useState<ProgramRow[]>([]);
@@ -29,6 +29,31 @@ export default function MyProgramsScreen() {
 
   const hasPrograms = programs.length > 0;
   const [settingCurrent, setSettingCurrent] = useState<number|null>(null);
+  const [deletingId, setDeletingId] = useState<number|null>(null);
+
+  const handleDeleteProgram = async (id: number) => {
+    setDeletingId(id);
+    try {
+      await deleteProgram(id);
+      const rows = await getPrograms();
+      setPrograms(rows);
+    } catch (err) {
+      console.error('Failed to delete program:', err);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const confirmDeleteProgram = (id: number, name: string) => {
+    Alert.alert(
+      'Delete Program',
+      `Are you sure you want to delete the program "${name}"? This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => handleDeleteProgram(id) },
+      ]
+    );
+  };
 
   const handleSetCurrentProgram = async (id: number) => {
     setSettingCurrent(id);
@@ -60,28 +85,38 @@ export default function MyProgramsScreen() {
             keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={styles.listContent}
             renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.card}
-                onPress={() => router.push(`/programs/${item.id}`)}
-              >
-                <ThemedText type="defaultSemiBold">
-                  {item.name}
-                  {item.isCurrentProgram === 1 && (
-                    <ThemedText style={styles.currentIndicator}>  (Current)</ThemedText>
-                  )}
-                </ThemedText>
-                  {item.isCurrentProgram !== 1 && (
-                    <TouchableOpacity
-                      style={styles.setCurrentButton}
-                      onPress={() => handleSetCurrentProgram(item.id)}
-                      disabled={settingCurrent === item.id}
-                    >
-                      <ThemedText style={styles.setCurrentButtonText}>
-                        {settingCurrent === item.id ? 'Setting...' : 'Set as Current'}
-                      </ThemedText>
-                    </TouchableOpacity>
-                  )}
-              </TouchableOpacity>
+              <ThemedView style={styles.card}>
+                <TouchableOpacity
+                  onPress={() => router.push(`/programs/${item.id}`)}
+                >
+                  <ThemedText type="defaultSemiBold">
+                    {item.name}
+                    {item.isCurrentProgram === 1 && (
+                      <ThemedText style={styles.currentIndicator}>  (Current)</ThemedText>
+                    )}
+                  </ThemedText>
+                </TouchableOpacity>
+                {item.isCurrentProgram !== 1 && (
+                  <TouchableOpacity
+                    style={styles.setCurrentButton}
+                    onPress={() => handleSetCurrentProgram(item.id)}
+                    disabled={settingCurrent === item.id}
+                  >
+                    <ThemedText style={styles.setCurrentButtonText}>
+                      {settingCurrent === item.id ? 'Setting...' : 'Set as Current'}
+                    </ThemedText>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  style={styles.deleteButton}
+                  onPress={() => confirmDeleteProgram(item.id, item.name)}
+                  disabled={deletingId === item.id}
+                >
+                  <ThemedText style={styles.deleteButtonText}>
+                    {deletingId === item.id ? 'Deleting...' : 'Delete'}
+                  </ThemedText>
+                </TouchableOpacity>
+              </ThemedView>
             )}
           />
         )}
@@ -100,21 +135,34 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#4b5563',
+    marginBottom: 4,
   },
   currentIndicator: {
     color: '#22c55e',
     fontWeight: 'bold',
   },
-    setCurrentButton: {
-      marginTop: 8,
-      paddingVertical: 8,
-      paddingHorizontal: 14,
-      borderRadius: 999,
-      backgroundColor: '#22c55e',
-      alignItems: 'center',
-    },
-    setCurrentButtonText: {
-      fontWeight: '600',
-      color: '#022c22',
-    },
+  setCurrentButton: {
+    marginTop: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    backgroundColor: '#22c55e',
+    alignItems: 'center',
+  },
+  setCurrentButtonText: {
+    fontWeight: '600',
+    color: '#022c22',
+  },
+  deleteButton: {
+    marginTop: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    backgroundColor: '#ef4444',
+    alignItems: 'center',
+  },
+  deleteButtonText: {
+    fontWeight: '600',
+    color: '#fff',
+  },
 });

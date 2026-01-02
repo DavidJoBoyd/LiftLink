@@ -37,7 +37,8 @@ export async function getDb() {
 
         CREATE TABLE IF NOT EXISTS programs (
           id   INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL
+          name TEXT NOT NULL,
+          isCurrentProgram INTEGER NOT NULL DEFAULT 0
         );
 
         CREATE TABLE IF NOT EXISTS workouts (
@@ -164,6 +165,14 @@ export async function getWorkoutById(id: number): Promise<WorkoutRow | null> {
   );
 
   return row ?? null;
+}
+
+
+/* ---------- DELETE PROGRAM ---------- */
+
+export async function deleteProgram(id: number) {
+  const db = await getDb();
+  await db.runAsync('DELETE FROM programs WHERE id = ?', id);
 }
 
 /* ---------- PERSONAL RECORDS ---------- */
