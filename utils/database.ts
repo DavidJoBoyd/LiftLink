@@ -24,6 +24,33 @@ export type SetRow = {
   isTemplate: number; // 0 or 1 in DB
 };
 
+export type WorkoutLogEntry = {
+  id: number;
+  workoutId: number;
+  workoutName: string;
+  date: string;
+  setCount: number;
+};
+
+export type ProgramTemplateRow = {
+  id: number;
+  name: string;
+};
+
+export type WorkoutTemplateRow = {
+  id: number;
+  programTemplateId: number;
+  name: string;
+};
+
+export type SetTemplateRow = {
+  id: number;
+  workoutTemplateId: number;
+  exerciseName: string;
+  weight: number;
+  reps: number;
+};
+
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
 /** Open DB once and make sure tables exist */
@@ -57,6 +84,27 @@ export async function getDb() {
           date         TEXT NOT NULL,
           isTemplate   INTEGER NOT NULL DEFAULT 0,
           FOREIGN KEY (workoutId) REFERENCES workouts(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS program_templates (
+          id   INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS workout_templates (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          programTemplateId INTEGER NOT NULL,
+          name TEXT NOT NULL,
+          FOREIGN KEY (programTemplateId) REFERENCES program_templates(id) ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS set_templates (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          workoutTemplateId INTEGER NOT NULL,
+          exerciseName TEXT NOT NULL,
+          weight REAL NOT NULL,
+          reps INTEGER NOT NULL,
+          FOREIGN KEY (workoutTemplateId) REFERENCES workout_templates(id) ON DELETE CASCADE
         );
       `);
 
@@ -203,4 +251,53 @@ export async function getPersonalRecords(): Promise<PersonalRecord[]> {
     GROUP BY s1.exerciseName
     ORDER BY maxWeight DESC, s1.exerciseName`
   );
+}
+
+export async function getWorkoutLog(): Promise<WorkoutLogEntry[]> {
+  const db = await getDb();
+  return db.getAllAsync<WorkoutLogEntry>(
+    `SELECT 
+      MIN(s.id) as id, 
+      s.workoutId, 
+      w.name as workoutName, 
+      DATE(s.date) as date, 
+      COUNT(*) as setCount
+    FROM sets s
+    JOIN workouts w ON s.workoutId = w.id
+    WHERE s.isTemplate = 0
+    GROUP BY s.workoutId, DATE(s.date)
+    ORDER BY date DESC, s.workoutId`
+  );
+}
+
+/* ---------- TEMPLATE TABLES ---------- */
+
+/* CRUD for program_templates */
+export async function createProgramTemplate(name: string) {
+  const db = await getDb();
+  await db.runAsync('INSERT INTO program_templates (name) VALUES (?)', name.trim());
+}
+export async function getProgramTemplates(): Promise<ProgramTemplateRow[]> {
+  const db = await getDb();
+  return db.getAllAsync<ProgramTemplateRow>('SELECT id, name FROM program_templates ORDER BY id DESC');
+}
+
+/* CRUD for workout_templates */
+export async function createWorkoutTemplate(programTemplateId: number, name: string) {
+  const db = await getDb();
+  await db.runAsync('INSERT INTO workout_templates (programTemplateId, name) VALUES (?, ?)', programTemplateId, name.trim());
+}
+export async function getWorkoutTemplatesForProgram(programTemplateId: number): Promise<WorkoutTemplateRow[]> {
+  const db = await getDb();
+  return db.getAllAsync<WorkoutTemplateRow>('SELECT id, programTemplateId, name FROM workout_templates WHERE programTemplateId = ? ORDER BY id', programTemplateId);
+}
+
+/* CRUD for set_templates */
+export async function createSetTemplate(workoutTemplateId: number, exerciseName: string, weight: number, reps: number) {
+  const db = await getDb();
+  await db.runAsync('INSERT INTO set_templates (workoutTemplateId, exerciseName, weight, reps) VALUES (?, ?, ?, ?)', workoutTemplateId, exerciseName.trim(), weight, reps);
+}
+export async function getSetTemplatesForWorkout(workoutTemplateId: number): Promise<SetTemplateRow[]> {
+  const db = await getDb();
+  return db.getAllAsync<SetTemplateRow>('SELECT id, workoutTemplateId, exerciseName, weight, reps FROM set_templates WHERE workoutTemplateId = ? ORDER BY id', workoutTemplateId);
 }
