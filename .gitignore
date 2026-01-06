@@ -41,3 +41,11 @@ app-example
 # generated native folders
 /ios
 /android
+
+# Visual Studio and VS Code
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates

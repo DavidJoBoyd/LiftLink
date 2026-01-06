@@ -26,7 +26,13 @@ export default function WorkoutLogScreen() {
   }, []);
 
   const handlePressLog = (workoutId: number, date: string) => {
-    router.push(`/workout-session?workoutId=${workoutId}&date=${encodeURIComponent(date)}`);
+    router.push({
+      pathname: '/pages/workout-session',
+      params: {
+        workoutId: workoutId.toString(),
+        date,
+      },
+    });
   };
 
   const hasWorkouts = workouts.length > 0;
