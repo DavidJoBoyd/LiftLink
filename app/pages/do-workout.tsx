@@ -1,14 +1,16 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { addSetToWorkout, getProgramTemplates, getSetTemplatesForWorkout, getWorkoutTemplatesForProgram, ProgramTemplateRow, SetTemplateRow, WorkoutTemplateRow } from '@/utils/database';
+import { getPrograms } from '@/db/programs';
+import { getWorkoutsForProgram, createWorkoutEntry, getWorkoutEntriesForProgram } from '@/db/workouts';
+import { getSetsForWorkout, Set } from '@/db/sets';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function DoWorkoutScreen() {
-  const [currentProgramTemplate, setCurrentProgramTemplate] = useState<ProgramTemplateRow | null>(null);
-  const [currentWorkoutTemplate, setCurrentWorkoutTemplate] = useState<WorkoutTemplateRow | null>(null);
-  const [sets, setSets] = useState<SetTemplateRow[]>([]);
+  const [currentProgram, setCurrentProgram] = useState<{ id: number; name: string } | null>(null);
+  const [currentWorkout, setCurrentWorkout] = useState<{ id: number; name: string } | null>(null);
+  const [sets, setSets] = useState<Set[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const router = useRouter();
@@ -17,16 +19,16 @@ export default function DoWorkoutScreen() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const programTemplates = await getProgramTemplates();
-        const programTemplate = programTemplates.length > 0 ? programTemplates[0] : null;
-        setCurrentProgramTemplate(programTemplate);
-        if (programTemplate) {
-          const workoutTemplates = await getWorkoutTemplatesForProgram(programTemplate.id);
-          const workoutTemplate = workoutTemplates.length > 0 ? workoutTemplates[0] : null;
-          setCurrentWorkoutTemplate(workoutTemplate);
-          if (workoutTemplate) {
-            const setTemplates = await getSetTemplatesForWorkout(workoutTemplate.id);
-            setSets(setTemplates);
+        const programs = await getPrograms();
+        const program = programs.find(p => p.isCurrentProgram === 1) || null;
+        setCurrentProgram(program);
+        if (program) {
+          const workouts = await getWorkoutsForProgram(program.id);
+          const workout = workouts.length > 0 ? workouts[0] : null;
+          setCurrentWorkout(workout);
+          if (workout) {
+            const workoutSets = await getSetsForWorkout(workout.id);
+            setSets(workoutSets);
           }
         }
       } finally {
@@ -36,26 +38,26 @@ export default function DoWorkoutScreen() {
     fetchData();
   }, []);
 
-  const updateSetField = (setId: number, field: keyof Omit<SetTemplateRow, 'id' | 'workoutTemplateId'>, value: string) => {
+  const updateSetField = (setId: number, field: keyof Omit<Set, 'id' | 'workoutId'>, value: string) => {
     setSets(prev => prev.map(s =>
       s.id === setId ? { ...s, [field]: value } : s
     ));
   };
 
   const handleCompleteWorkout = async () => {
-    if (!currentWorkoutTemplate) return;
+    if (!currentWorkout || !currentProgram) return;
     setSaving(true);
     try {
-      for (const set of sets) {
-        await addSetToWorkout(
-          currentWorkoutTemplate.id,
-          set.exerciseName,
-          parseFloat(set.weight.toString()),
-          parseInt(set.reps.toString(), 10),
-          new Date(),
-          false // isTemplate = false
-        );
-      }
+      // Create a new workout entry for this session
+      await createWorkoutEntry(currentProgram.id, currentWorkout.name, new Date());
+      // Get the latest workout entry for this program
+      const entries = await getWorkoutEntriesForProgram(currentProgram.id);
+      const newEntry = entries[entries.length - 1];
+      if (!newEntry) throw new Error('Failed to create workout entry');
+      // Optionally, add sets to this entry if you have set_entries table
+      // for (const set of sets) {
+      //   await createSetEntry(newEntry.id, set.exerciseName, parseFloat(set.weight.toString()), parseInt(set.reps.toString(), 10));
+      // }
       router.push('/workout-log');
     } finally {
       setSaving(false);
@@ -68,12 +70,12 @@ export default function DoWorkoutScreen() {
       <ThemedView style={styles.container}>
         {loading ? (
           <ThemedText>Loading...</ThemedText>
-        ) : !currentProgramTemplate || !currentWorkoutTemplate ? (
+        ) : !currentProgram || !currentWorkout ? (
           <ThemedText>No current program or workout found.</ThemedText>
         ) : (
           <ScrollView contentContainerStyle={styles.scrollContent}>
-            <ThemedText type="title" style={styles.title}>{currentProgramTemplate.name}</ThemedText>
-            <ThemedText style={styles.subtitle}>{currentWorkoutTemplate.name}</ThemedText>
+            <ThemedText type="title" style={styles.title}>{currentProgram.name}</ThemedText>
+            <ThemedText style={styles.subtitle}>{currentWorkout.name}</ThemedText>
             {sets.map(set => (
               <View key={set.id} style={styles.setRow}>
                 <ThemedText style={styles.exerciseName}>{set.exerciseName}</ThemedText>

@@ -5,17 +5,14 @@ import { FlatList, StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import {
-    getSetsForWorkout,
-    getWorkoutById,
-    type WorkoutSetRow,
-} from '@/utils/database';
+import { getSetsForWorkout, Set } from '@/db/sets';
+import { getWorkoutById, Workout } from '@/db/workouts';
 
 export default function WorkoutDetailScreen() {
   const { id } = useLocalSearchParams();
   const workoutId = Number(id);
 
-  const [sets, setSets] = useState<WorkoutSetRow[]>([]);
+  const [sets, setSets] = useState<Set[]>([]);
   const [workoutName, setWorkoutName] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
@@ -63,13 +60,13 @@ export default function WorkoutDetailScreen() {
             data={sets}
             keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={styles.listContent}
-            renderItem={({ item }) => (
+            renderItem={({ item, index }) => (
               <ThemedView style={styles.card}>
                 <ThemedText type="defaultSemiBold">
                   {item.exerciseName}
                 </ThemedText>
                 <ThemedText>
-                  Set {item.setNumber}: {item.reps} reps @ {item.weight} lb
+                  Set {index + 1}: {item.reps} reps @ {item.weight} lb
                 </ThemedText>
               </ThemedView>
             )}

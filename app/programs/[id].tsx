@@ -5,34 +5,28 @@ import { FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import {
-    getProgramTemplates,
-    getWorkoutTemplatesForProgram,
-    type WorkoutTemplateRow,
-} from '@/utils/database';
+import { getPrograms, Program } from '@/db/programs';
+import { getWorkoutsForProgram, Workout } from '@/db/workouts';
 
 export default function ProgramDetailScreen() {
   const { id } = useLocalSearchParams();
-  const programTemplateId = Number(id);
+  const programId = Number(id);
   const router = useRouter();
 
-  const [workouts, setWorkouts] = useState<WorkoutTemplateRow[]>([]);
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [programName, setProgramName] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!programTemplateId) return;
+    if (!programId) return;
 
     const load = async () => {
       try {
-        const [programTemplates, workoutTemplates] = await Promise.all([
-          getProgramTemplates(),
-          getWorkoutTemplatesForProgram(programTemplateId),
-        ]);
-
-        const program = programTemplates.find((p) => p.id === programTemplateId);
+        const programs = await getPrograms();
+        const program = programs.find((p) => p.id === programId);
         if (program) setProgramName(program.name);
-        setWorkouts(workoutTemplates);
+        const workoutEntries = await getWorkoutsForProgram(programId);
+        setWorkouts(workoutEntries);
       } catch (err) {
         console.error('Failed to load program/workouts:', err);
       } finally {
@@ -41,7 +35,7 @@ export default function ProgramDetailScreen() {
     };
 
     load();
-  }, [programTemplateId]);
+  }, [programId]);
 
   const hasWorkouts = workouts.length > 0;
 

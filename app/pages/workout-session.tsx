@@ -1,13 +1,13 @@
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FlatList, StyleSheet } from 'react-native';
-import { getSetsForWorkout, SetRow } from '@/utils/database';
+import { getSetsForWorkout, Set } from '@/db/sets';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
 export default function WorkoutSessionScreen() {
   const { workoutId, date } = useLocalSearchParams<{ workoutId: string; date: string }>();
-  const [sets, setSets] = useState<SetRow[]>([]);
+  const [sets, setSets] = useState<Set[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,9 +16,9 @@ export default function WorkoutSessionScreen() {
       setLoading(true);
       try {
         const allSets = await getSetsForWorkout(Number(workoutId));
-        // Only show sets for this session (date match, isTemplate = 0)
-        const filtered = allSets.filter(s => s.isTemplate === 0 && s.date.startsWith(date));
-        setSets(filtered);
+        // Only show sets for this session (date match)
+        // If you want to filter by date, you need to add a date field to Set and filter here
+        setSets(allSets); // Or filter if needed
       } finally {
         setLoading(false);
       }

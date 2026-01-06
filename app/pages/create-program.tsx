@@ -11,7 +11,9 @@ import {
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { getDb, createProgramTemplate, createWorkoutTemplate, createSetTemplate } from '@/utils/database';
+import { createProgram, getPrograms } from '@/db/programs';
+import { createWorkout, getWorkoutsForProgram } from '@/db/workouts';
+import { createSet } from '@/db/sets';
 
 
 type NewSet = {
@@ -140,37 +142,32 @@ export default function CreateProgramScreen() {
 
     try {
       setSaving(true);
-      // Insert into program_templates
-      await createProgramTemplate(trimmedProgram);
-      // Get the last inserted program_template id
-      const db = await getDb();
-      const [{ id: programTemplateId }] = await db.getAllAsync('SELECT id FROM program_templates ORDER BY id DESC LIMIT 1');
+      await createProgram(trimmedProgram);
+      const programs = await getPrograms();
+      const program = programs[0];
+      if (!program) throw new Error('Failed to create program');
 
       for (const workout of workouts) {
         const trimmedWorkoutName = workout.name.trim();
         if (!trimmedWorkoutName) continue;
-
-        await createWorkoutTemplate(programTemplateId, trimmedWorkoutName);
-        const [{ id: workoutTemplateId }] = await db.getAllAsync('SELECT id FROM workout_templates WHERE programTemplateId = ? ORDER BY id DESC LIMIT 1', programTemplateId);
-
+        await createWorkout(program.id, trimmedWorkoutName);
+        const workoutList = await getWorkoutsForProgram(program.id);
+        const workoutObj = workoutList[workoutList.length - 1];
+        if (!workoutObj) continue;
         for (const exercise of workout.exercises) {
           const trimmedExercise = exercise.name.trim();
           if (!trimmedExercise) continue;
-
           for (const set of exercise.sets) {
             const weightNum = parseFloat(set.weight || '0');
             const repsNum = parseInt(set.reps || '0', 10);
             if (Number.isNaN(weightNum) || Number.isNaN(repsNum)) continue;
-
-            await createSetTemplate(workoutTemplateId, trimmedExercise, weightNum, repsNum);
+            await createSet(workoutObj.id, trimmedExercise, weightNum, repsNum);
           }
         }
       }
-
-      // After saving everything, go to My Programs
       router.push('/my-programs');
     } catch (err) {
-      console.error('Failed to save program template:', err);
+      console.error('Failed to save program:', err);
     } finally {
       setSaving(false);
     }

@@ -2,13 +2,12 @@ import { Stack, useRouter } from 'expo-router';
 import { FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import { useEffect, useState } from 'react';
 
-import { getWorkoutLog, type WorkoutLogEntry } from '@/utils/database';
-
+import { getAllWorkoutEntries, WorkoutEntry } from '@/db/workouts';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
 export default function WorkoutLogScreen() {
-  const [workouts, setWorkouts] = useState<WorkoutLogEntry[]>([]);
+  const [workouts, setWorkouts] = useState<WorkoutEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -16,7 +15,7 @@ export default function WorkoutLogScreen() {
     const fetchLog = async () => {
       setLoading(true);
       try {
-        const log = await getWorkoutLog();
+        const log = await getAllWorkoutEntries();
         setWorkouts(log);
       } finally {
         setLoading(false);
@@ -25,12 +24,11 @@ export default function WorkoutLogScreen() {
     fetchLog();
   }, []);
 
-  const handlePressLog = (workoutId: number, date: string) => {
+  const handlePressLog = (workoutId: number) => {
     router.push({
       pathname: '/pages/workout-session',
       params: {
         workoutId: workoutId.toString(),
-        date,
       },
     });
   };
@@ -60,11 +58,9 @@ export default function WorkoutLogScreen() {
             keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={styles.listContent}
             renderItem={({ item }) => (
-              <TouchableOpacity onPress={() => handlePressLog(item.workoutId, item.date)}>
+              <TouchableOpacity onPress={() => handlePressLog(item.id)}>
                 <ThemedView style={styles.card}>
-                  <ThemedText type="defaultSemiBold">{item.workoutName}</ThemedText>
-                  <ThemedText>{item.date}</ThemedText>
-                  <ThemedText>{item.setCount} sets</ThemedText>
+                  <ThemedText type="defaultSemiBold">{item.name}</ThemedText>
                 </ThemedView>
               </TouchableOpacity>
             )}

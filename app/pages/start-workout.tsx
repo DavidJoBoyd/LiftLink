@@ -1,4 +1,5 @@
-import { getPrograms, getWorkoutsForProgram, ProgramRow, WorkoutRow } from '@/utils/database';
+import { getPrograms } from '@/db/programs';
+import { getWorkoutsForProgram } from '@/db/workouts';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
@@ -7,8 +8,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
 export default function StartWorkoutScreen() {
-  const [currentProgram, setCurrentProgram] = useState<ProgramRow | null>(null);
-  const [currentWorkout, setCurrentWorkout] = useState<WorkoutRow | null>(null);
+  const [currentProgram, setCurrentProgram] = useState<{ id: number; name: string; isCurrentProgram: number } | null>(null);
+  const [currentWorkout, setCurrentWorkout] = useState<{ id: number; programId: number; name: string } | null>(null);
   const router = useRouter();
   const [loading, setLoading] = useState(true);
 
