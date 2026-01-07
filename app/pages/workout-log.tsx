@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { getAllWorkoutEntries, Workout } from '@/db/workouts';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { workoutLogStyles as styles } from '@/styles/pageStyles';
+import { workoutLogStyles as styles } from '../styles/pageStyles';
 
 export default function WorkoutLogScreen() {
   const [workouts, setWorkouts] = useState<Workout[]>([]);

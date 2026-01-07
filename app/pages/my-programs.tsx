@@ -5,7 +5,7 @@ import { FlatList, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { getPrograms, setCurrentProgram, Program } from '@/db/programs';
-import { myProgramsStyles as styles } from '@/styles/pageStyles';
+import { myProgramsStyles as styles } from '../styles/pageStyles';
 
 export default function MyProgramsScreen() {
   const [programs, setPrograms] = useState<Program[]>([]);

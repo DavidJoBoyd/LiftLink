@@ -5,7 +5,7 @@ import { getWorkoutById, Workout } from '@/db/workouts';
 import { getSetsForWorkout, Set } from '@/db/sets';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { workoutSessionStyles as styles } from '@/styles/pageStyles';
+import { workoutSessionStyles as styles } from '../styles/pageStyles';
 
 export default function WorkoutSessionScreen() {
   const { workoutId } = useLocalSearchParams<{ workoutId: string }>();

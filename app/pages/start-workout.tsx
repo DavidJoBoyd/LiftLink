@@ -6,7 +6,7 @@ import { TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { startWorkoutStyles as styles } from '@/styles/pageStyles';
+import { startWorkoutStyles as styles } from '../styles/pageStyles';
 
 export default function StartWorkoutScreen() {
   const [currentProgram, setCurrentProgram] = useState<{ id: number; name: string; isCurrentProgram: number } | null>(null);

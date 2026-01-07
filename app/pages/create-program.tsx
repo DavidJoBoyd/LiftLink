@@ -13,7 +13,7 @@ import { ThemedView } from '@/components/themed-view';
 import { createProgram, getPrograms } from '@/db/programs';
 import { createWorkout, getWorkoutsForProgram } from '@/db/workouts';
 import { createSet } from '@/db/sets';
-import { createProgramStyles as styles } from '@/styles/pageStyles';
+import { createProgramStyles as styles } from '../styles/pageStyles';
 
 
 type NewSet = {

@@ -4,7 +4,7 @@ import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useRouter } from 'expo-router';
-import { homeStyles as styles } from '@/styles/pageStyles';
+import { homeStyles as styles } from '../styles/pageStyles';
 
 export default function HomeScreen() {
   const router = useRouter();

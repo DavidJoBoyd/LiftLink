@@ -6,7 +6,7 @@ import { getSetsForWorkout, createSet, Set } from '@/db/sets';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ScrollView, TextInput, TouchableOpacity, View } from 'react-native';
-import { doWorkoutStyles as styles } from '@/styles/pageStyles';
+import { doWorkoutStyles as styles } from '../styles/pageStyles';
 
 export default function DoWorkoutScreen() {
   const [currentProgram, setCurrentProgram] = useState<{ id: number; name: string } | null>(null);
