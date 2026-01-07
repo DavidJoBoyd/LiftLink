@@ -3,7 +3,6 @@ import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   ScrollView,
-  StyleSheet,
   TextInput,
   TouchableOpacity,
   View,
@@ -14,6 +13,7 @@ import { ThemedView } from '@/components/themed-view';
 import { createProgram, getPrograms } from '@/db/programs';
 import { createWorkout, getWorkoutsForProgram } from '@/db/workouts';
 import { createSet } from '@/db/sets';
+import { createProgramStyles as styles } from '@/styles/pageStyles';
 
 
 type NewSet = {
@@ -303,78 +303,3 @@ export default function CreateProgramScreen() {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 24,
-    paddingBottom: 48,
-    gap: 16,
-  },
-  title: {
-    marginBottom: 8,
-  },
-  label: {
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 8,
-  },
-  sectionHeader: {
-    marginTop: 12,
-    marginBottom: 4,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  helperText: {
-    opacity: 0.7,
-    marginBottom: 4,
-  },
-  workoutCard: {
-    marginTop: 8,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#4b5563',
-  },
-  setRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 8,
-  },
-  setInput: {
-    flex: 1,
-    marginBottom: 0,
-  },
-  smallButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 999,
-    backgroundColor: '#374151',
-  },
-  smallButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  saveButton: {
-    marginTop: 16,
-    paddingVertical: 14,
-    borderRadius: 999,
-    backgroundColor: '#22c55e',
-    alignItems: 'center',
-  },
-  saveButtonDisabled: {
-    opacity: 0.5,
-  },
-  saveButtonText: {
-    fontWeight: '600',
-    color: '#022c22',
-  },
-});

@@ -1,10 +1,11 @@
 // app/my-programs.tsx
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { FlatList, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { getPrograms, setCurrentProgram, Program } from '@/db/programs';
+import { myProgramsStyles as styles } from '@/styles/pageStyles';
 
 export default function MyProgramsScreen() {
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -101,33 +102,3 @@ export default function MyProgramsScreen() {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, gap: 16 },
-  title: { marginBottom: 8 },
-  emptyText: { opacity: 0.8 },
-  listContent: { gap: 12, paddingTop: 4 },
-  card: {
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#4b5563',
-    marginBottom: 4,
-  },
-  setCurrentButton: {
-    marginTop: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: '#3b82f6',
-    alignItems: 'center',
-  },
-  setCurrentButtonText: {
-    color: '#fff',
-    fontWeight: '500',
-  },
-  currentIndicator: {
-    fontSize: 14,
-    color: '#4caf50',
-  },
-});

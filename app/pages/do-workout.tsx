@@ -1,11 +1,12 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { getPrograms } from '@/db/programs';
+import { getPrograms, advanceCurrentWorkoutForProgram } from '@/db/programs';
 import { getWorkoutsForProgram, createWorkoutEntry, getAllWorkoutEntries, Workout } from '@/db/workouts';
 import { getSetsForWorkout, createSet, Set } from '@/db/sets';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { ScrollView, TextInput, TouchableOpacity, View } from 'react-native';
+import { doWorkoutStyles as styles } from '@/styles/pageStyles';
 
 export default function DoWorkoutScreen() {
   const [currentProgram, setCurrentProgram] = useState<{ id: number; name: string } | null>(null);
@@ -25,7 +26,7 @@ export default function DoWorkoutScreen() {
         if (program) {
           // Only use template workouts (isEntry=0) for selection
           const workouts = (await getWorkoutsForProgram(program.id)).filter(w => w.isEntry === 0);
-          const workout = workouts.length > 0 ? workouts[0] : null;
+          const workout = workouts.find(w => w.id === program.currentWorkoutId) || null;
           setCurrentWorkout(workout);
           if (workout) {
             const workoutSets = await getSetsForWorkout(workout.id);
@@ -65,7 +66,9 @@ export default function DoWorkoutScreen() {
           true // isEntry = true
         );
       }
-      router.push('/workout-log');
+        console.log(currentProgram.id, currentWorkout.id);
+      await advanceCurrentWorkoutForProgram(currentProgram.id);
+      router.push('/pages');
     } finally {
       setSaving(false);
     }
@@ -117,16 +120,3 @@ export default function DoWorkoutScreen() {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24 },
-  scrollContent: { gap: 16, paddingBottom: 48 },
-  title: { marginBottom: 4 },
-  subtitle: { marginBottom: 12, opacity: 0.8 },
-  setRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  exerciseName: { minWidth: 80, fontWeight: '600' },
-  input: { borderWidth: 1, borderRadius: 8, padding: 8, minWidth: 60 },
-  completeButton: { marginTop: 24, paddingVertical: 14, borderRadius: 999, backgroundColor: '#22c55e', alignItems: 'center' },
-  completeButtonDisabled: { opacity: 0.5 },
-  completeButtonText: { fontWeight: '600', color: '#022c22' },
-});

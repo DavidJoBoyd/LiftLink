@@ -1,10 +1,11 @@
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { FlatList, StyleSheet } from 'react-native';
+import { FlatList } from 'react-native';
 import { getWorkoutById, Workout } from '@/db/workouts';
 import { getSetsForWorkout, Set } from '@/db/sets';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { workoutSessionStyles as styles } from '@/styles/pageStyles';
 
 export default function WorkoutSessionScreen() {
   const { workoutId } = useLocalSearchParams<{ workoutId: string }>();
@@ -65,16 +66,3 @@ export default function WorkoutSessionScreen() {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, gap: 16 },
-  title: { marginBottom: 8 },
-  subtitle: { opacity: 0.8, marginBottom: 8 },
-  listContent: { gap: 12, paddingTop: 4 },
-  card: {
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#4b5563',
-  },
-});

@@ -1,4 +1,5 @@
 import { getDb } from './connection';
+import { getTemplateWorkoutsForProgram } from './workouts';
 
 export type Program = {
   id: number;
@@ -40,6 +41,34 @@ export async function setCurrentProgram(id: number) {
 export async function setCurrentWorkoutForProgram(programId: number, workoutId: number | null) {
   const db = await getDb();
   await db.runAsync('UPDATE programs SET currentWorkoutId = ? WHERE id = ?', workoutId, programId);
+}
+
+export async function advanceCurrentWorkoutForProgram(programId: number) {
+  const program = await getProgramById(programId);
+  if (!program || program.currentWorkoutId == null) {
+    console.log('No current program or currentWorkoutId set.');
+    return null;
+  }
+  const templateWorkouts = await getTemplateWorkoutsForProgram(programId);
+  console.log('Template workouts:', templateWorkouts);
+  const currentIndex = templateWorkouts.findIndex(w => w.id === program.currentWorkoutId);
+  console.log('Current workoutId:', program.currentWorkoutId, 'Current index:', currentIndex);
+  let nextWorkoutId = null;
+  if (currentIndex !== -1 && templateWorkouts.length > 0) {
+    if (currentIndex + 1 < templateWorkouts.length) {
+      nextWorkoutId = templateWorkouts[currentIndex + 1].id;
+    } else {
+      nextWorkoutId = templateWorkouts[0].id;
+    }
+    console.log('Advancing to next workoutId:', nextWorkoutId);
+    await setCurrentWorkoutForProgram(programId, nextWorkoutId);
+    // Log the updated program
+    const updatedProgram = await getProgramById(programId);
+    console.log('Updated program after advancing:', updatedProgram);
+  } else {
+    console.log('No valid current workout or no template workouts.');
+  }
+  return nextWorkoutId;
 }
 
 export async function deleteProgram(id: number) {

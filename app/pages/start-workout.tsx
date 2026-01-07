@@ -2,10 +2,11 @@ import { getPrograms } from '@/db/programs';
 import { getWorkoutsForProgram } from '@/db/workouts';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import { TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { startWorkoutStyles as styles } from '@/styles/pageStyles';
 
 export default function StartWorkoutScreen() {
   const [currentProgram, setCurrentProgram] = useState<{ id: number; name: string; isCurrentProgram: number } | null>(null);
@@ -22,7 +23,8 @@ export default function StartWorkoutScreen() {
         setCurrentProgram(current);
         if (current) {
           const workouts = await getWorkoutsForProgram(current.id);
-          setCurrentWorkout(workouts.length > 0 ? workouts[0] : null);
+          const currentWorkout = workouts.find(w => w.id === current.currentWorkoutId) || null;
+          setCurrentWorkout(currentWorkout);
         } else {
           setCurrentWorkout(null);
         }
@@ -96,42 +98,3 @@ export default function StartWorkoutScreen() {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 24,
-    gap: 16,
-  },
-  title: {
-    marginBottom: 4,
-  },
-  subtitle: {
-    opacity: 0.8,
-  },
-  buttonGroup: {
-    marginTop: 16,
-    gap: 12,
-  },
-  button: {
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryButton: {
-    backgroundColor: '#22c55e',
-  },
-  secondaryButton: {
-    borderWidth: 1,
-    borderColor: '#4b5563',
-  },
-  primaryButtonText: {
-    fontWeight: '600',
-    color: '#022c22',
-  },
-  secondaryButtonText: {
-    fontWeight: '600',
-  },
-});

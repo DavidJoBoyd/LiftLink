@@ -1,13 +1,14 @@
 import { Stack, useRouter } from 'expo-router';
-import { FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { FlatList, TouchableOpacity } from 'react-native';
 import { useEffect, useState } from 'react';
 
-import { getAllWorkoutEntries, WorkoutEntry } from '@/db/workouts';
+import { getAllWorkoutEntries, Workout } from '@/db/workouts';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { workoutLogStyles as styles } from '@/styles/pageStyles';
 
 export default function WorkoutLogScreen() {
-  const [workouts, setWorkouts] = useState<WorkoutEntry[]>([]);
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -48,8 +49,7 @@ export default function WorkoutLogScreen() {
           <ThemedText style={styles.emptyText}>Loading...</ThemedText>
         ) : !hasWorkouts ? (
           <ThemedText style={styles.emptyText}>
-            You haven’t logged any workouts yet.
-            {'\n'}
+            You haven’t logged any workouts yet.{"\n"}
             Start a workout to see it appear here.
           </ThemedText>
         ) : (
@@ -70,27 +70,3 @@ export default function WorkoutLogScreen() {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 24,
-    gap: 16,
-  },
-  title: {
-    marginBottom: 8,
-  },
-  emptyText: {
-    opacity: 0.8,
-  },
-  listContent: {
-    gap: 12,
-    paddingTop: 4,
-  },
-  card: {
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#4b5563',
-  },
-});

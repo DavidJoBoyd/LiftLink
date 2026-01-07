@@ -6,7 +6,7 @@ import { FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { getPrograms, Program } from '@/db/programs';
-import { getWorkoutsForProgram, Workout } from '@/db/workouts';
+import { getTemplateWorkoutsForProgram, Workout } from '@/db/workouts';
 
 export default function ProgramDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -25,8 +25,8 @@ export default function ProgramDetailScreen() {
         const programs = await getPrograms();
         const program = programs.find((p) => p.id === programId);
         if (program) setProgramName(program.name);
-        const workoutEntries = await getWorkoutsForProgram(programId);
-        setWorkouts(workoutEntries);
+        const templateWorkouts = await getTemplateWorkoutsForProgram(programId);
+        setWorkouts(templateWorkouts);
       } catch (err) {
         console.error('Failed to load program/workouts:', err);
       } finally {

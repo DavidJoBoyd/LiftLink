@@ -37,6 +37,14 @@ export async function getWorkoutsForProgram(programId: number): Promise<Workout[
   );
 }
 
+export async function getTemplateWorkoutsForProgram(programId: number): Promise<Workout[]> {
+  const db = await getDb();
+  return db.getAllAsync<Workout>(
+    'SELECT id, programId, name, isEntry, date FROM workouts WHERE programId = ? AND isEntry = 0 ORDER BY id',
+    programId
+  );
+}
+
 export async function getWorkoutById(id: number): Promise<Workout | null> {
   const db = await getDb();
   const row = await db.getFirstAsync<Workout>(
