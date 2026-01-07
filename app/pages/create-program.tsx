@@ -18,26 +18,23 @@ import { createProgramStyles as styles } from '../styles/pageStyles';
 
 type NewSet = {
   id: string;
+  exerciseName: string;
   weight: string;
   reps: string;
-};
-
-type NewExercise = {
-  id: string;
-  name: string;
-  sets: NewSet[];
 };
 
 type NewWorkout = {
   id: string;
   name: string;
-  exercises: NewExercise[];
+  sets: NewSet[];
 };
 
 export default function CreateProgramScreen() {
   const [programName, setProgramName] = useState('');
   const [workouts, setWorkouts] = useState<NewWorkout[]>([]);
   const [saving, setSaving] = useState(false);
+  const [editingProgram, setEditingProgram] = useState(false);
+  const [editingWorkoutId, setEditingWorkoutId] = useState<string | null>(null);
   const router = useRouter();
 
 
@@ -45,7 +42,7 @@ export default function CreateProgramScreen() {
     const newWorkout: NewWorkout = {
       id: Date.now().toString() + Math.random().toString(36).slice(2),
       name: '',
-      exercises: [],
+      sets: [],
     };
     setWorkouts((prev) => [...prev, newWorkout]);
   };
@@ -59,57 +56,22 @@ export default function CreateProgramScreen() {
     );
   };
 
-  const addExerciseToWorkout = (workoutId: string) => {
-    const newExercise: NewExercise = {
-      id: Date.now().toString() + Math.random().toString(36).slice(2),
-      name: '',
-      sets: [],
-    };
-    setWorkouts((prev) =>
-      prev.map((w) =>
-        w.id === workoutId ? { ...w, exercises: [...w.exercises, newExercise] } : w
-      )
-    );
-  };
-
-  const updateExerciseName = (workoutId: string, exerciseId: string, name: string) => {
-    setWorkouts((prev) =>
-      prev.map((w) =>
-        w.id === workoutId
-          ? {
-              ...w,
-              exercises: w.exercises.map((e) =>
-                e.id === exerciseId ? { ...e, name } : e
-              ),
-            }
-          : w
-      )
-    );
-  };
-
-  const addSetToExercise = (workoutId: string, exerciseId: string) => {
+  const addSetToWorkout = (workoutId: string) => {
     const newSet: NewSet = {
       id: Date.now().toString() + Math.random().toString(36).slice(2),
+      exerciseName: '',
       weight: '',
       reps: '',
     };
     setWorkouts((prev) =>
       prev.map((w) =>
-        w.id === workoutId
-          ? {
-              ...w,
-              exercises: w.exercises.map((e) =>
-                e.id === exerciseId ? { ...e, sets: [...e.sets, newSet] } : e
-              ),
-            }
-          : w
+        w.id === workoutId ? { ...w, sets: [...w.sets, newSet] } : w
       )
     );
   };
 
   const updateSetField = (
     workoutId: string,
-    exerciseId: string,
     setId: string,
     field: keyof Omit<NewSet, 'id'>,
     value: string
@@ -119,16 +81,7 @@ export default function CreateProgramScreen() {
         w.id === workoutId
           ? {
               ...w,
-              exercises: w.exercises.map((e) =>
-                e.id === exerciseId
-                  ? {
-                      ...e,
-                      sets: e.sets.map((s) =>
-                        s.id === setId ? { ...s, [field]: value } : s
-                      ),
-                    }
-                  : e
-              ),
+              sets: w.sets.map((s) => (s.id === setId ? { ...s, [field]: value } : s)),
             }
           : w
       )
@@ -154,18 +107,18 @@ export default function CreateProgramScreen() {
         const workoutList = await getWorkoutsForProgram(program.id);
         const workoutObj = workoutList[workoutList.length - 1];
         if (!workoutObj) continue;
-        for (const exercise of workout.exercises) {
-          const trimmedExercise = exercise.name.trim();
+
+        for (const set of workout.sets) {
+          const trimmedExercise = set.exerciseName.trim();
           if (!trimmedExercise) continue;
-          for (const set of exercise.sets) {
-            const weightNum = parseFloat(set.weight || '0');
-            const repsNum = parseInt(set.reps || '0', 10);
-            if (Number.isNaN(weightNum) || Number.isNaN(repsNum)) continue;
-            await createSet(workoutObj.id, trimmedExercise, weightNum, repsNum);
-          }
+          const weightNum = parseFloat(set.weight || '0');
+          const repsNum = parseInt(set.reps || '0', 10);
+          if (Number.isNaN(weightNum) || Number.isNaN(repsNum)) continue;
+          await createSet(workoutObj.id, trimmedExercise, weightNum, repsNum);
         }
       }
-      router.push('/my-programs');
+
+      router.push('/pages/my-programs');
     } catch (err) {
       console.error('Failed to save program:', err);
     } finally {
@@ -179,25 +132,29 @@ export default function CreateProgramScreen() {
 
       <ThemedView style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Program header */}
-          <ThemedText type="title" style={styles.title}>
-            Create a Program
-          </ThemedText>
 
-          <ThemedText style={styles.label}>Program Name</ThemedText>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. 4-Day Upper/Lower"
-            value={programName}
-            onChangeText={setProgramName}
-          />
+          {editingProgram ? (
+            <TextInput
+              style={[styles.inlineEditable, { fontSize: 18, fontWeight: '700' }]}
+              placeholder="Program name (e.g. 4-Day Upper/Lower)"
+              value={programName}
+              onChangeText={setProgramName}
+              autoFocus
+              onBlur={() => setEditingProgram(false)}
+              multiline={false}
+              numberOfLines={1}
+            />
+          ) : (
+            <TouchableOpacity onPress={() => setEditingProgram(true)}>
+              <ThemedText style={{ fontSize: 18, fontWeight: '700', marginBottom: 8 }}>
+                {programName || 'Program name (tap to edit)'}
+              </ThemedText>
+            </TouchableOpacity>
+          )}
 
           {/* Workouts section */}
           <View style={styles.sectionHeader}>
             <ThemedText type="defaultSemiBold">Workouts</ThemedText>
-            <TouchableOpacity style={styles.smallButton} onPress={addWorkout}>
-              <ThemedText style={styles.smallButtonText}>+ Add Workout</ThemedText>
-            </TouchableOpacity>
           </View>
 
           {workouts.length === 0 && (
@@ -208,82 +165,84 @@ export default function CreateProgramScreen() {
 
           {workouts.map((workout) => (
             <View key={workout.id} style={styles.workoutCard}>
-              <ThemedText style={styles.label}>Workout Name</ThemedText>
-              <TextInput
-                style={styles.input}
-                placeholder="e.g. Upper 1"
-                value={workout.name}
-                onChangeText={(text) => updateWorkoutName(workout.id, text)}
-              />
+              {editingWorkoutId === workout.id ? (
+                <TextInput
+                  style={[styles.inlineEditable, { fontSize: 16, fontWeight: '600' }]}
+                  placeholder="Workout name (e.g. Upper 1)"
+                  value={workout.name}
+                  onChangeText={(text) => updateWorkoutName(workout.id, text)}
+                  autoFocus
+                  onBlur={() => setEditingWorkoutId(null)}
+                  multiline={false}
+                  numberOfLines={1}
+                />
+              ) : (
+                <TouchableOpacity onPress={() => setEditingWorkoutId(workout.id)}>
+                  <ThemedText style={{ fontSize: 16, fontWeight: '600', marginBottom: 8 }}>
+                    {workout.name || 'Workout name (tap to edit)'}
+                  </ThemedText>
+                </TouchableOpacity>
+              )}
 
               <View style={styles.sectionHeader}>
-                <ThemedText type="defaultSemiBold">Exercises</ThemedText>
-                <TouchableOpacity
-                  style={styles.smallButton}
-                  onPress={() => addExerciseToWorkout(workout.id)}
-                >
-                  <ThemedText style={styles.smallButtonText}>+ Add Exercise</ThemedText>
-                </TouchableOpacity>
+                <ThemedText type="defaultSemiBold">Sets</ThemedText>
               </View>
 
-              {workout.exercises.length === 0 && (
+              {workout.sets.length === 0 && (
                 <ThemedText style={styles.helperText}>
-                  Add your first exercise to this workout.
+                  Add sets for this workout. Each set includes an exercise name, weight, and reps.
                 </ThemedText>
               )}
 
-              {workout.exercises.map((exercise) => (
-                <View key={exercise.id} style={{ marginBottom: 12 }}>
-                  <ThemedText style={styles.label}>Exercise Name</ThemedText>
+              {workout.sets.map((set) => (
+                <View key={set.id} style={styles.setRow}>
                   <TextInput
-                    style={styles.input}
-                    placeholder="e.g. Bench Press"
-                    value={exercise.name}
-                    onChangeText={(text) => updateExerciseName(workout.id, exercise.id, text)}
+                    style={[styles.input, styles.setInput, { flex: 2 }]}
+                    placeholder="Exercise"
+                    value={set.exerciseName}
+                    onChangeText={(text) =>
+                      updateSetField(workout.id, set.id, 'exerciseName', text)
+                    }
                   />
-
-                  <View style={styles.sectionHeader}>
-                    <ThemedText type="defaultSemiBold">Sets</ThemedText>
-                    <TouchableOpacity
-                      style={styles.smallButton}
-                      onPress={() => addSetToExercise(workout.id, exercise.id)}
-                    >
-                      <ThemedText style={styles.smallButtonText}>+ Add Set</ThemedText>
-                    </TouchableOpacity>
-                  </View>
-
-                  {exercise.sets.length === 0 && (
-                    <ThemedText style={styles.helperText}>
-                      Add sets for this exercise (weight, reps).
-                    </ThemedText>
-                  )}
-
-                  {exercise.sets.map((set) => (
-                    <View key={set.id} style={styles.setRow}>
-                      <TextInput
-                        style={[styles.input, styles.setInput]}
-                        placeholder="Weight"
-                        keyboardType="numeric"
-                        value={set.weight}
-                        onChangeText={(text) =>
-                          updateSetField(workout.id, exercise.id, set.id, 'weight', text)
-                        }
-                      />
-                      <TextInput
-                        style={[styles.input, styles.setInput]}
-                        placeholder="Reps"
-                        keyboardType="numeric"
-                        value={set.reps}
-                        onChangeText={(text) =>
-                          updateSetField(workout.id, exercise.id, set.id, 'reps', text)
-                        }
-                      />
-                    </View>
-                  ))}
+                  <TextInput
+                    style={[styles.input, styles.setInput]}
+                    placeholder="Weight"
+                    keyboardType="numeric"
+                    value={set.weight}
+                    onChangeText={(text) =>
+                      updateSetField(workout.id, set.id, 'weight', text)
+                    }
+                  />
+                  <TextInput
+                    style={[styles.input, styles.setInput]}
+                    placeholder="Reps"
+                    keyboardType="numeric"
+                    value={set.reps}
+                    onChangeText={(text) =>
+                      updateSetField(workout.id, set.id, 'reps', text)
+                    }
+                  />
                 </View>
               ))}
+
+              {/* Add Set button placed below all sets for this workout */}
+              <View style={{ marginTop: 8}}>
+                <TouchableOpacity
+                  style={styles.smallButton}
+                  onPress={() => addSetToWorkout(workout.id)}
+                >
+                  <ThemedText style={styles.smallButtonText}>+ Add Set</ThemedText>
+                </TouchableOpacity>
+              </View>
             </View>
           ))}
+
+          {/* Add Workout button placed below all workouts */}
+          <View style={{ marginTop: 8 }}>
+            <TouchableOpacity style={styles.smallButton} onPress={addWorkout}>
+              <ThemedText style={styles.smallButtonText}>+ Add Workout</ThemedText>
+            </TouchableOpacity>
+          </View>
 
           {/* Save button */}
           <TouchableOpacity

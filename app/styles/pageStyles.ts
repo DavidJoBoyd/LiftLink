@@ -50,14 +50,27 @@ export const createProgramStyles = StyleSheet.create({
     marginBottom: 0,
   },
   smallButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
     borderRadius: 999,
-    backgroundColor: '#374151',
+    backgroundColor: '#2563eb', // brighter blue for visibility
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Longer variant of the small button used for add-set to match add-workout size
+  smallButtonFull: {
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 999,
+    backgroundColor: '#2563eb',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 160,
   },
   smallButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#ffffff',
   },
   saveButton: {
     marginTop: 16,
@@ -72,6 +85,12 @@ export const createProgramStyles = StyleSheet.create({
   saveButtonText: {
     fontWeight: '600',
     color: '#022c22',
+  },
+  inlineEditable: {
+    borderWidth: 0,
+    paddingVertical: 6,
+    paddingHorizontal: 0,
+    marginBottom: 8,
   },
 });
 
