@@ -13,7 +13,7 @@ import { ThemedView } from '@/components/themed-view';
 import { createProgram, getPrograms } from '@/db/programs';
 import { createWorkout, getWorkoutsForProgram } from '@/db/workouts';
 import { createSet } from '@/db/sets';
-import { getExercises } from '@/db/exercises';
+import { getExercises, findOrCreateExercise } from '@/db/exercises';
 import { createProgramStyles as styles } from '../styles/pageStyles';
 
 
@@ -70,16 +70,18 @@ export default function CreateProgramScreen() {
   };
 
   const addSetToWorkout = (workoutId: string) => {
-    const newSet: NewSet = {
-      id: Date.now().toString() + Math.random().toString(36).slice(2),
-      exerciseName: '',
-      weight: '',
-      reps: '',
-    };
     setWorkouts((prev) =>
-      prev.map((w) =>
-        w.id === workoutId ? { ...w, sets: [...w.sets, newSet] } : w
-      )
+      prev.map((w) => {
+        if (w.id !== workoutId) return w;
+        const lastSet = w.sets[w.sets.length - 1];
+        const newSet: NewSet = {
+          id: Date.now().toString() + Math.random().toString(36).slice(2),
+          exerciseName: lastSet ? lastSet.exerciseName : '',
+          weight: lastSet ? lastSet.weight : '',
+          reps: lastSet ? lastSet.reps : '',
+        };
+        return { ...w, sets: [...w.sets, newSet] };
+      })
     );
   };
 
@@ -139,10 +141,12 @@ export default function CreateProgramScreen() {
         for (const set of workout.sets) {
           const trimmedExercise = set.exerciseName.trim();
           if (!trimmedExercise) continue;
+          const exercise = await findOrCreateExercise(trimmedExercise);
+          if (!exercise) continue;
           const weightNum = parseFloat(set.weight || '0');
           const repsNum = parseInt(set.reps || '0', 10);
           if (Number.isNaN(weightNum) || Number.isNaN(repsNum)) continue;
-          await createSet(workoutObj.id, trimmedExercise, weightNum, repsNum);
+          await createSet(workoutObj.id, exercise.id, exercise.name, weightNum, repsNum);
         }
       }
 
@@ -159,7 +163,7 @@ export default function CreateProgramScreen() {
       <Stack.Screen options={{ title: 'Create a Program' }} />
 
       <ThemedView style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
 
           {editingProgram ? (
             <TextInput
@@ -215,7 +219,7 @@ export default function CreateProgramScreen() {
                       placeholder="Exercise"
                       value={set.exerciseName}
                       onChangeText={(text) => handleExerciseChange(workout.id, set.id, text)}
-                      onBlur={() => setSuggestions((prev) => ({ ...prev, [set.id]: [] }))}
+                      onFocus={() => handleExerciseChange(workout.id, set.id, set.exerciseName)}
                     />
                     <TextInput
                       style={[styles.input, styles.setInput]}
@@ -240,7 +244,7 @@ export default function CreateProgramScreen() {
                   {suggestions[set.id] && suggestions[set.id].length > 0 && (
                     <View style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 6, marginTop: 6 }}>
                       {suggestions[set.id].map((s) => (
-                        <TouchableOpacity key={s} onPress={() => selectSuggestion(workout.id, set.id, s)}>
+                        <TouchableOpacity key={s} onPress={() => selectSuggestion(workout.id, set.id, s)} activeOpacity={0.7}>
                           <ThemedText style={{ paddingVertical: 6 }}>{s}</ThemedText>
                         </TouchableOpacity>
                       ))}

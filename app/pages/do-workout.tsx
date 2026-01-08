@@ -40,9 +40,10 @@ export default function DoWorkoutScreen() {
     fetchData();
   }, []);
 
-  const updateSetField = (setId: number, field: keyof Omit<Set, 'id' | 'workoutId' | 'isEntry'>, value: string) => {
+  const updateSetField = (setId: number, field: 'weight' | 'reps', value: string) => {
+    const parsed = value === '' ? 0 : Number(value);
     setSets(prev => prev.map(s =>
-      s.id === setId ? { ...s, [field]: value } : s
+      s.id === setId ? { ...s, [field]: parsed } : s
     ));
   };
 
@@ -60,9 +61,10 @@ export default function DoWorkoutScreen() {
       for (const set of sets) {
         await createSet(
           newEntry.id,
+          set.exerciseId,
           set.exerciseName,
-          parseFloat(set.weight.toString()),
-          parseInt(set.reps.toString(), 10),
+          Number(set.weight),
+          Number(set.reps),
           true // isEntry = true
         );
       }

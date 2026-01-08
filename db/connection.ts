@@ -24,31 +24,33 @@ export async function getDb() {
           date TEXT,
           FOREIGN KEY (programId) REFERENCES programs(id) ON DELETE CASCADE
         );
-        CREATE TABLE IF NOT EXISTS sets (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          workoutId INTEGER NOT NULL,
-          exerciseName TEXT NOT NULL,
-          weight REAL NOT NULL,
-          reps INTEGER NOT NULL,
-          isEntry INTEGER NOT NULL DEFAULT 0,
-          FOREIGN KEY (workoutId) REFERENCES workouts(id) ON DELETE CASCADE
-        );
         CREATE TABLE IF NOT EXISTS exercises (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT NOT NULL UNIQUE
         );
+        CREATE TABLE IF NOT EXISTS sets (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          workoutId INTEGER NOT NULL,
+          exerciseId INTEGER NOT NULL,
+          exerciseName TEXT NOT NULL,
+          weight REAL NOT NULL,
+          reps INTEGER NOT NULL,
+          isEntry INTEGER NOT NULL DEFAULT 0,
+          FOREIGN KEY (workoutId) REFERENCES workouts(id) ON DELETE CASCADE,
+          FOREIGN KEY (exerciseId) REFERENCES exercises(id)
+        );
       `);
 
-      // Insert default exercises
-      for (const name of DEFAULT_EXERCISES) {
-        // Use runAsync to execute parameterized insert
-        // INSERT OR IGNORE avoids duplicates because of UNIQUE constraint
-        // Using template literal is safe here because DEFAULT_EXERCISES is a constant list
-        await db.runAsync('INSERT OR IGNORE INTO exercises (name) VALUES (?)', name);
-      }
+      await seedDefaultExercises(db);
 
       return db;
     })();
   }
   return dbPromise;
+}
+
+async function seedDefaultExercises(db: SQLite.SQLiteDatabase) {
+  for (const name of DEFAULT_EXERCISES) {
+    await db.runAsync('INSERT OR IGNORE INTO exercises (name) VALUES (?)', name);
+  }
 }
