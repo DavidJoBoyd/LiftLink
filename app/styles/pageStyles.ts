@@ -39,7 +39,7 @@ export const createProgramStyles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     borderColor: '#4b5563',
-    backgroundColor: 'rgba(15,23,42,0.07)',
+    backgroundColor: 'rgba(15,23,42,0)',
   },
   setRow: {
     flexDirection: 'row',
