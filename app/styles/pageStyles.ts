@@ -76,7 +76,7 @@ export const createProgramStyles = StyleSheet.create({
     marginTop: 16,
     paddingVertical: 14,
     borderRadius: 999,
-    backgroundColor: '#22c55e',
+    backgroundColor: '#0ea5e9', // changed to blue
     alignItems: 'center',
   },
   saveButtonDisabled: {
@@ -84,7 +84,7 @@ export const createProgramStyles = StyleSheet.create({
   },
   saveButtonText: {
     fontWeight: '600',
-    color: '#022c22',
+    color: '#ffffff', // white on blue
   },
   inlineEditable: {
     borderWidth: 0,
@@ -102,9 +102,9 @@ export const doWorkoutStyles = StyleSheet.create({
   setRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
   exerciseName: { minWidth: 80, fontWeight: '600' },
   input: { borderWidth: 1, borderRadius: 8, padding: 8, minWidth: 60 },
-  completeButton: { marginTop: 24, paddingVertical: 14, borderRadius: 999, backgroundColor: '#22c55e', alignItems: 'center' },
+  completeButton: { marginTop: 24, paddingVertical: 14, borderRadius: 999, backgroundColor: '#0ea5e9', alignItems: 'center' },
   completeButtonDisabled: { opacity: 0.5 },
-  completeButtonText: { fontWeight: '600', color: '#022c22' },
+  completeButtonText: { fontWeight: '600', color: '#ffffff' },
 });
 
 export const myProgramsStyles = StyleSheet.create({
@@ -161,7 +161,7 @@ export const startWorkoutStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryButton: {
-    backgroundColor: '#22c55e',
+    backgroundColor: '#0ea5e9', // changed to blue
   },
   secondaryButton: {
     borderWidth: 1,
@@ -169,7 +169,7 @@ export const startWorkoutStyles = StyleSheet.create({
   },
   primaryButtonText: {
     fontWeight: '600',
-    color: '#022c22',
+    color: '#ffffff',
   },
   secondaryButtonText: {
     fontWeight: '600',
@@ -237,7 +237,7 @@ export const homeStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryButton: {
-    backgroundColor: '#22c55e',
+    backgroundColor: '#0ea5e9', // changed to blue
   },
   secondaryButton: {
     borderWidth: 1,
@@ -245,7 +245,7 @@ export const homeStyles = StyleSheet.create({
   },
   primaryButtonText: {
     fontWeight: '600',
-    color: '#022c22',
+    color: '#ffffff',
   },
   secondaryButtonText: {
     fontWeight: '600',

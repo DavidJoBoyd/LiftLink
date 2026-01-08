@@ -211,7 +211,7 @@ export default function CreateProgramScreen() {
               ))}
 
               {/* Add Set button placed below all sets for this workout */}
-              <View style={{ marginTop: 8}}>
+              <View style={{ marginTop: 16}}>
                 <TouchableOpacity
                   style={styles.smallButton}
                   onPress={() => addSetToWorkout(workout.id)}
