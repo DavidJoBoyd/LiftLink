@@ -152,11 +152,6 @@ export default function CreateProgramScreen() {
             </TouchableOpacity>
           )}
 
-          {/* Workouts section */}
-          <View style={styles.sectionHeader}>
-            <ThemedText type="defaultSemiBold">Workouts</ThemedText>
-          </View>
-
           {workouts.length === 0 && (
             <ThemedText style={styles.helperText}>
               Add your first workout to this program.
@@ -182,16 +177,6 @@ export default function CreateProgramScreen() {
                     {workout.name || 'Workout name (tap to edit)'}
                   </ThemedText>
                 </TouchableOpacity>
-              )}
-
-              <View style={styles.sectionHeader}>
-                <ThemedText type="defaultSemiBold">Sets</ThemedText>
-              </View>
-
-              {workout.sets.length === 0 && (
-                <ThemedText style={styles.helperText}>
-                  Add sets for this workout. Each set includes an exercise name, weight, and reps.
-                </ThemedText>
               )}
 
               {workout.sets.map((set) => (
