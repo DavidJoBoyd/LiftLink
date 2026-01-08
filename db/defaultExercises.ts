@@ -1,0 +1,22 @@
+export const DEFAULT_EXERCISES: string[] = [
+  'Bench Press',
+  'Squat',
+  'Deadlift',
+  'Overhead Press',
+  'Barbell Row',
+  'Pull-up',
+  'Chin-up',
+  'Dumbbell Bench Press',
+  'Dumbbell Row',
+  'Lunge',
+  'Leg Press',
+  'Romanian Deadlift',
+  'Biceps Curl',
+  'Triceps Extension',
+  'Lat Pulldown',
+  'Seated Cable Row',
+  'Leg Curl',
+  'Leg Extension',
+  'Calf Raise',
+  'Plank'
+];

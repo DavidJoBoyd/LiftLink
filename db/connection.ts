@@ -1,4 +1,5 @@
 import * as SQLite from 'expo-sqlite';
+import { DEFAULT_EXERCISES } from './defaultExercises';
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
@@ -32,7 +33,20 @@ export async function getDb() {
           isEntry INTEGER NOT NULL DEFAULT 0,
           FOREIGN KEY (workoutId) REFERENCES workouts(id) ON DELETE CASCADE
         );
+        CREATE TABLE IF NOT EXISTS exercises (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL UNIQUE
+        );
       `);
+
+      // Insert default exercises
+      for (const name of DEFAULT_EXERCISES) {
+        // Use runAsync to execute parameterized insert
+        // INSERT OR IGNORE avoids duplicates because of UNIQUE constraint
+        // Using template literal is safe here because DEFAULT_EXERCISES is a constant list
+        await db.runAsync('INSERT OR IGNORE INTO exercises (name) VALUES (?)', name);
+      }
+
       return db;
     })();
   }

@@ -12,6 +12,7 @@ export default function HomeScreen() {
   const handleStartWorkout = () => router.push('/pages/start-workout');
   const handleWorkoutLog = () => router.push('/pages/workout-log');
   const handleMyPrograms = () => router.push('/pages/my-programs');
+  const handleExercises = () => router.push('/pages/exercises');
 
   return (
     <ParallaxScrollView
@@ -49,11 +50,19 @@ export default function HomeScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
+             style={[styles.button, styles.secondaryButton]}
+             onPress={handleExercises}
+             >
+            <ThemedText style={styles.secondaryButtonText}>My Exercises</ThemedText>
+          </TouchableOpacity>
+
+          <TouchableOpacity
             style={[styles.button, styles.primaryButton]}
             onPress={handleCreateProgram}
           >
             <ThemedText style={styles.primaryButtonText}>Create a Program</ThemedText>
           </TouchableOpacity>
+
         </ThemedView>
       </ThemedView>
     </ParallaxScrollView>

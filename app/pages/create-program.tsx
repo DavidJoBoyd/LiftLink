@@ -1,6 +1,6 @@
 // app/create-program.tsx
 import { Stack, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ScrollView,
   TextInput,
@@ -13,6 +13,7 @@ import { ThemedView } from '@/components/themed-view';
 import { createProgram, getPrograms } from '@/db/programs';
 import { createWorkout, getWorkoutsForProgram } from '@/db/workouts';
 import { createSet } from '@/db/sets';
+import { getExercises } from '@/db/exercises';
 import { createProgramStyles as styles } from '../styles/pageStyles';
 
 
@@ -35,8 +36,21 @@ export default function CreateProgramScreen() {
   const [saving, setSaving] = useState(false);
   const [editingProgram, setEditingProgram] = useState(false);
   const [editingWorkoutId, setEditingWorkoutId] = useState<string | null>(null);
+  const [exerciseOptions, setExerciseOptions] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<Record<string, string[]>>({});
   const router = useRouter();
 
+  useEffect(() => {
+    const loadExercises = async () => {
+      try {
+        const list = await getExercises();
+        setExerciseOptions(list.map((e) => e.name));
+      } catch (err) {
+        console.error('Failed to load exercises:', err);
+      }
+    };
+    loadExercises();
+  }, []);
 
   const addWorkout = () => {
     const newWorkout: NewWorkout = {
@@ -46,7 +60,6 @@ export default function CreateProgramScreen() {
     };
     setWorkouts((prev) => [...prev, newWorkout]);
   };
-
 
   const updateWorkoutName = (workoutId: string, name: string) => {
     setWorkouts((prev) =>
@@ -88,6 +101,21 @@ export default function CreateProgramScreen() {
     );
   };
 
+  const handleExerciseChange = (workoutId: string, setId: string, text: string) => {
+    updateSetField(workoutId, setId, 'exerciseName', text);
+    const q = text.trim().toLowerCase();
+    if (!q) {
+      setSuggestions((prev) => ({ ...prev, [setId]: [] }));
+      return;
+    }
+    const matches = exerciseOptions.filter((n) => n.toLowerCase().includes(q)).slice(0, 6);
+    setSuggestions((prev) => ({ ...prev, [setId]: matches }));
+  };
+
+  const selectSuggestion = (workoutId: string, setId: string, suggestion: string) => {
+    updateSetField(workoutId, setId, 'exerciseName', suggestion);
+    setSuggestions((prev) => ({ ...prev, [setId]: [] }));
+  };
 
   const handleSaveProgram = async () => {
     const trimmedProgram = programName.trim();
@@ -180,33 +208,44 @@ export default function CreateProgramScreen() {
               )}
 
               {workout.sets.map((set) => (
-                <View key={set.id} style={styles.setRow}>
-                  <TextInput
-                    style={[styles.input, styles.setInput, { flex: 2 }]}
-                    placeholder="Exercise"
-                    value={set.exerciseName}
-                    onChangeText={(text) =>
-                      updateSetField(workout.id, set.id, 'exerciseName', text)
-                    }
-                  />
-                  <TextInput
-                    style={[styles.input, styles.setInput]}
-                    placeholder="Weight"
-                    keyboardType="numeric"
-                    value={set.weight}
-                    onChangeText={(text) =>
-                      updateSetField(workout.id, set.id, 'weight', text)
-                    }
-                  />
-                  <TextInput
-                    style={[styles.input, styles.setInput]}
-                    placeholder="Reps"
-                    keyboardType="numeric"
-                    value={set.reps}
-                    onChangeText={(text) =>
-                      updateSetField(workout.id, set.id, 'reps', text)
-                    }
-                  />
+                <View key={set.id} style={{ marginBottom: 8 }}>
+                  <View style={styles.setRow}>
+                    <TextInput
+                      style={[styles.input, styles.setInput, { flex: 2 }]}
+                      placeholder="Exercise"
+                      value={set.exerciseName}
+                      onChangeText={(text) => handleExerciseChange(workout.id, set.id, text)}
+                      onBlur={() => setSuggestions((prev) => ({ ...prev, [set.id]: [] }))}
+                    />
+                    <TextInput
+                      style={[styles.input, styles.setInput]}
+                      placeholder="Weight"
+                      keyboardType="numeric"
+                      value={set.weight}
+                      onChangeText={(text) =>
+                        updateSetField(workout.id, set.id, 'weight', text)
+                      }
+                    />
+                    <TextInput
+                      style={[styles.input, styles.setInput]}
+                      placeholder="Reps"
+                      keyboardType="numeric"
+                      value={set.reps}
+                      onChangeText={(text) =>
+                        updateSetField(workout.id, set.id, 'reps', text)
+                      }
+                    />
+                  </View>
+
+                  {suggestions[set.id] && suggestions[set.id].length > 0 && (
+                    <View style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 6, marginTop: 6 }}>
+                      {suggestions[set.id].map((s) => (
+                        <TouchableOpacity key={s} onPress={() => selectSuggestion(workout.id, set.id, s)}>
+                          <ThemedText style={{ paddingVertical: 6 }}>{s}</ThemedText>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
                 </View>
               ))}
 
