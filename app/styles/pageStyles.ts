@@ -34,11 +34,12 @@ export const createProgramStyles = StyleSheet.create({
     marginBottom: 4,
   },
   workoutCard: {
-    marginTop: 8,
-    padding: 12,
-    borderRadius: 12,
+    marginTop: 12,
+    padding: 16,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: '#4b5563',
+    backgroundColor: 'rgba(15,23,42,0.07)',
   },
   setRow: {
     flexDirection: 'row',

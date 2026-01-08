@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -158,6 +160,12 @@ export default function CreateProgramScreen() {
     }
   };
 
+  const removeSetFromWorkout = (workoutId: string, setId: string) => {
+    setWorkouts((prev) =>
+      prev.map((w) => (w.id === workoutId ? { ...w, sets: w.sets.filter((s) => s.id !== setId) } : w))
+    );
+  };
+
   return (
     <>
       <Stack.Screen options={{ title: 'Create a Program' }} />
@@ -212,45 +220,67 @@ export default function CreateProgramScreen() {
               )}
 
               {workout.sets.map((set) => (
-                <View key={set.id} style={{ marginBottom: 8 }}>
-                  <View style={styles.setRow}>
-                    <TextInput
-                      style={[styles.input, styles.setInput, { flex: 2 }]}
-                      placeholder="Exercise"
-                      value={set.exerciseName}
-                      onChangeText={(text) => handleExerciseChange(workout.id, set.id, text)}
-                      onFocus={() => handleExerciseChange(workout.id, set.id, set.exerciseName)}
-                    />
-                    <TextInput
-                      style={[styles.input, styles.setInput]}
-                      placeholder="Weight"
-                      keyboardType="numeric"
-                      value={set.weight}
-                      onChangeText={(text) =>
-                        updateSetField(workout.id, set.id, 'weight', text)
-                      }
-                    />
-                    <TextInput
-                      style={[styles.input, styles.setInput]}
-                      placeholder="Reps"
-                      keyboardType="numeric"
-                      value={set.reps}
-                      onChangeText={(text) =>
-                        updateSetField(workout.id, set.id, 'reps', text)
-                      }
-                    />
-                  </View>
-
-                  {suggestions[set.id] && suggestions[set.id].length > 0 && (
-                    <View style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 6, marginTop: 6 }}>
-                      {suggestions[set.id].map((s) => (
-                        <TouchableOpacity key={s} onPress={() => selectSuggestion(workout.id, set.id, s)} activeOpacity={0.7}>
-                          <ThemedText style={{ paddingVertical: 6 }}>{s}</ThemedText>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
+                <Swipeable
+                  key={set.id}
+                  renderRightActions={() => (
+                    <TouchableOpacity
+                      onPress={() => removeSetFromWorkout(workout.id, set.id)}
+                      activeOpacity={0.8}
+                      style={{
+                        backgroundColor: '#ef4444',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        borderRadius: 8,
+                        paddingHorizontal: 16,
+                        paddingVertical: 8,
+                        width: 56,
+                        alignSelf: 'center',
+                      }}
+                    >
+                      <MaterialIcons name="delete" size={20} color="#fff" />
+                    </TouchableOpacity>
                   )}
-                </View>
+                >
+                  <View style={{ marginBottom: 8 }}>
+                    <View style={styles.setRow}>
+                   <TextInput
+                     style={[styles.input, styles.setInput, { flex: 2 }]}
+                     placeholder="Exercise"
+                     value={set.exerciseName}
+                     onChangeText={(text) => handleExerciseChange(workout.id, set.id, text)}
+                     onFocus={() => handleExerciseChange(workout.id, set.id, set.exerciseName)}
+                   />
+                   <TextInput
+                     style={[styles.input, styles.setInput]}
+                     placeholder="Weight"
+                     keyboardType="numeric"
+                     value={set.weight}
+                     onChangeText={(text) =>
+                       updateSetField(workout.id, set.id, 'weight', text)
+                     }
+                   />
+                   <TextInput
+                     style={[styles.input, styles.setInput]}
+                     placeholder="Reps"
+                     keyboardType="numeric"
+                     value={set.reps}
+                     onChangeText={(text) =>
+                       updateSetField(workout.id, set.id, 'reps', text)
+                     }
+                   />
+                 </View>
+ 
+                 {suggestions[set.id] && suggestions[set.id].length > 0 && (
+                   <View style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 6, marginTop: 6 }}>
+                     {suggestions[set.id].map((s) => (
+                       <TouchableOpacity key={s} onPress={() => selectSuggestion(workout.id, set.id, s)} activeOpacity={0.7}>
+                         <ThemedText style={{ paddingVertical: 6 }}>{s}</ThemedText>
+                       </TouchableOpacity>
+                     ))}
+                   </View>
+                 )}
+                  </View>
+                </Swipeable>
               ))}
 
               {/* Add Set button placed below all sets for this workout */}
