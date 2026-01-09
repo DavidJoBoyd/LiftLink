@@ -41,6 +41,25 @@ export const createProgramStyles = StyleSheet.create({
     borderColor: '#4b5563',
     backgroundColor: 'rgba(15,23,42,0)',
   },
+  workoutHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  deleteWorkoutButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#9ca3af',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteWorkoutButtonText: {
+    color: '#ffffff',
+    fontWeight: '700',
+    fontSize: 14,
+  },
   setRow: {
     flexDirection: 'row',
     gap: 8,
@@ -49,6 +68,15 @@ export const createProgramStyles = StyleSheet.create({
   setInput: {
     flex: 1,
     marginBottom: 0,
+  },
+  deleteSetButton: {
+    backgroundColor: '#ef4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginTop: 8,
   },
   smallButton: {
     paddingVertical: 8,

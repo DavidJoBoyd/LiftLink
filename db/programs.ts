@@ -36,6 +36,19 @@ export async function setCurrentProgram(id: number) {
   const db = await getDb();
   await db.runAsync('UPDATE programs SET isCurrentProgram = 0');
   await db.runAsync('UPDATE programs SET isCurrentProgram = 1 WHERE id = ?', id);
+
+  const templateWorkouts = await getTemplateWorkoutsForProgram(id);
+  const firstWorkoutId = templateWorkouts.length > 0 ? templateWorkouts[0].id : null;
+  if (firstWorkoutId != null) {
+    try {
+      await setCurrentWorkoutForProgram(id, firstWorkoutId);
+      return;
+    } catch (error) {
+      console.warn('Failed to link first workout as current, resetting to null', error);
+    }
+  }
+
+  await setCurrentWorkoutForProgram(id, null);
 }
 
 export async function setCurrentWorkoutForProgram(programId: number, workoutId: number | null) {
